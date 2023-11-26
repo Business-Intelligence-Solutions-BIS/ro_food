@@ -2,6 +2,10 @@
 const Axios = require("axios");
 const https = require("https");
 const { get, rest } = require("lodash");
+const { CREDENTIALS } = require("../credentials");
+const { writeUser, saveSession } = require("../helpers");
+const CustomController = require("./customController");
+const Controller = require("./customController");
 
 class b1Controller {
     async test(req, res, next) {
@@ -15,18 +19,33 @@ class b1Controller {
 
     async login(req, res, next) {
         try {
-            const axios = Axios.create({
-                baseURL: "https://su26-02.sb1.cloud/ServiceLayer/b1s/v1/",
-                timeout: 30000,
-                httpsAgent: new https.Agent({
-                    rejectUnauthorized: false,
-                }),
-            });
-            return axios.post("/Login", req.body).then(({ data }) => {
-                return res.status(200).json(data);
-            }).catch(err => {
-                return res.status(get(err, 'response.status', 500)).json(get(err, 'response.data', `Error`))
-            });
+            delete req.headers.host
+            delete req.headers['content-length']
+
+            let ret = await CustomController.uiLogin(req.body)
+            if (ret.status !== 200 && ret.status !== 201) {
+                return res.status(ret.status || 400).send({
+                    "error": {
+                        "message": ret.data
+                    }
+                });
+            }
+
+            if (ret.headers['set-cookie'] && ret.headers['set-cookie'][0]) {
+                ret.headers['set-cookie'][0] += '; Path=/'
+            }
+
+            saveSession({
+                ...ret.data,
+                empID: ret.userData.EmployeeID,
+                startedAt: (new Date).valueOf()
+            })
+
+            res.set({
+                ...ret.headers
+            })
+
+            return res.status(ret.status).send(ret.data)
         }
         catch (e) {
             return next(e)
@@ -40,7 +59,7 @@ class b1Controller {
             delete req.headers['content-length']
             if (b1Api) {
                 const axios = Axios.create({
-                    baseURL: "https://su26-02.sb1.cloud/ServiceLayer/b1s/v1/",
+                    baseURL: "https://su26-02.sb1.cloud/",
                     timeout: 30000,
                     headers: req.headers,
                     httpsAgent: new https.Agent({
@@ -48,7 +67,7 @@ class b1Controller {
                     }),
                 });
                 return axios
-                    .get(b1Api)
+                    .get(req.originalUrl)
                     .then(({ data }) => {
                         return res.status(200).json(data);
                     })
@@ -71,7 +90,7 @@ class b1Controller {
             delete req.headers['content-length']
             if (b1Api) {
                 const axios = Axios.create({
-                    baseURL: "https://su26-02.sb1.cloud/ServiceLayer/b1s/v1/",
+                    baseURL: "https://su26-02.sb1.cloud",
                     timeout: 30000,
                     headers: req.headers,
                     httpsAgent: new https.Agent({
@@ -79,7 +98,7 @@ class b1Controller {
                     }),
                 });
                 return axios
-                    .post(b1Api, req.body)
+                    .post(req.originalUrl, req.body)
                     .then(({ data }) => {
                         return res.status(201).json(data);
                     })
@@ -102,7 +121,7 @@ class b1Controller {
             delete req.headers['content-length']
             if (b1Api) {
                 const axios = Axios.create({
-                    baseURL: "https://su26-02.sb1.cloud/ServiceLayer/b1s/v1/",
+                    baseURL: "https://su26-02.sb1.cloud",
                     timeout: 30000,
                     headers: req.headers,
                     httpsAgent: new https.Agent({
@@ -110,7 +129,7 @@ class b1Controller {
                     }),
                 });
                 return axios
-                    .patch(b1Api, req.body)
+                    .patch(req.originalUrl, req.body)
                     .then(({ data }) => {
                         return res.status(204).json(data);
                     })
@@ -125,6 +144,8 @@ class b1Controller {
             return next(e)
         }
     }
+
+
 }
 
 module.exports = new b1Controller()

@@ -1,0 +1,170 @@
+{
+    "roles": [
+        {
+            "id": 1,
+            "description": "Agent"
+        },
+        {
+            "id": 2,
+            "description": "Menejer"
+        },
+        {
+            "id": 3,
+            "description": "Sotuvchi"
+        },
+        {
+            "id": 4,
+            "description": "Ta'minotchi"
+        }
+    ],
+    "rolePermissions": [
+        {
+            "roleId": 1,
+            "objectId": "Invoices",
+            "action": "CREATE"
+        },
+        {
+            "roleId": 1,
+            "objectId": "Invoices",
+            "action": "READ"
+        },
+        {
+            "roleId": 1,
+            "objectId": "Invoices",
+            "action": "UPDATE"
+        },
+        {
+            "roleId": 1,
+            "objectId": "Invoices",
+            "action": "CANCEL"
+        },
+        {
+            "roleId": 1,
+            "objectId": "Orders",
+            "action": "CREATE"
+        },
+        {
+            "roleId": 1,
+            "objectId": "Orders",
+            "action": "READ"
+        },
+        {
+            "roleId": 1,
+            "objectId": "Orders",
+            "action": "UPDATE"
+        },
+        {
+            "roleId": 1,
+            "objectId": "Orders",
+            "action": "CANCEL"
+        }
+    ],
+    "userRoles": [
+        {
+            "empID": 1,
+            "roleId": 2
+        },
+        {
+            "empID": 2,
+            "roleId": 1
+        },
+        {
+            "empID": 3,
+            "roleId": 4
+        }
+    ],
+    "userAdditionalPermissions": [
+        {
+            "empID": 2,
+            "objectId": "Invoices",
+            "action": "CREATE"
+        },
+        {
+            "empID": 2,
+            "objectId": "Invoices",
+            "action": "READ"
+        },
+        {
+            "empID": 2,
+            "objectId": "Invoices",
+            "action": "UPDATE"
+        },
+        {
+            "empID": 2,
+            "objectId": "Invoices",
+            "action": "CANCEL"
+        }
+    ],
+    "sessions": [
+        {
+            "empID": 1,
+            "SessionId": "736dd398-6828-11ee-8000-005056984211",
+            "startedAt": 1697205582905,
+            "SessionTimeout": 1500
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "0acfa2d0-8c40-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 2,
+            "startedAt": 1700991719653
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "d7f1c0d0-8c64-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 7,
+            "startedAt": 1701007525589
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "ae7a2480-8c33-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 9,
+            "startedAt": 1700986410635
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "66e556e0-7ad0-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 10,
+            "startedAt": 1699074600335
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "be2aaa76-8c6a-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 3,
+            "startedAt": 1701010066141
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "7d437a4c-8c60-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 4,
+            "startedAt": 1701005655443
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "ce01a208-8b6e-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 12,
+            "startedAt": 1700901852627
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "6660b03c-89ff-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 11,
+            "startedAt": 1700744053644
+        }
+    ]
+}
