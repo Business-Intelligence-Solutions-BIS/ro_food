@@ -12,7 +12,7 @@ const { randomUUID } = new ShortUniqueId({ length: 10 });
 class b1Controller {
     async test(req, res, next) {
         try {
-            return res.status(201).json('ok')
+            return res.status(201).json('Assalomu Aleykum')
         }
         catch (e) {
             return next(e)
