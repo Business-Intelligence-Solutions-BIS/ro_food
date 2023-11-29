@@ -2,7 +2,7 @@ const { CREDENTIALS } = require("../credentials");
 const Axios = require("axios");
 const https = require("https");
 const { findSession, findUserPermissions, updateEmpWrh, infoNotification } = require("../helpers");
-const { get } = require("lodash");
+const { get, groupBy } = require("lodash");
 
 class CustomController {
     async uiLogin({ UserName, Password, Company }) {
@@ -159,20 +159,49 @@ class CustomController {
     notification = async (req, res, next) => {
         try {
             const sessionId = req.cookies['B1SESSION'];
-
             const sessionData = findSession(sessionId);
+            let { skip = 0, api } = req.query
             if (!sessionData) {
                 return res.status(401).send()
+            }
+            if (!api) {
+                return res.status(404).send({ message: 'Api not found' })
             }
 
             try {
                 let notification = []
                 if (sessionData?.jobTitle == 'qualitycontroller') {
-                    notification = infoNotification().filter(item => item.qualityEmpId == sessionData.empID)
+                    notification = infoNotification().filter(item => item.qualityEmpId == sessionData.empID && item.api == api)
                 }
                 else if (sessionData?.jobTitle == 'wrhmanager') {
-                    notification = infoNotification().filter(item => item.toEmpId == sessionData.empID)
+                    notification = infoNotification().filter(item => item.toEmpId == sessionData.empID && item.api == api)
                 }
+                let actNotification = notification
+                notification = notification.slice(skip, +skip + 20)
+                let len = notification.length
+                let slLen = actNotification.slice(skip, +skip + 21).length
+                notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
+                return res.status(200).json(notification)
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+
+    notificationMenu = async (req, res, next) => {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+            try {
+                let notification = [...new Set(infoNotification().map(item => item.api))]
                 return res.status(200).json(notification)
             }
             catch (err) {
@@ -203,11 +232,11 @@ class CustomController {
                     return { status: true, data }
                 })
                 .catch(async (err) => {
-                    return { status: false, errMessage: get(err, 'response.status', 500) }
+                    return { status: false, message: get(err, 'response.status', 500) }
                 });
         }
         catch (e) {
-            return { status: false, errMessage: e }
+            return { status: false, message: e }
         }
     }
 

@@ -27,7 +27,7 @@ io.on('connection', (socketIo) => {
             if (infoNot.wrhmanager == 2 && infoNot.qualitycontroller == 2) {
                 let session = infoUser().sessions.find((item) => item.empID === infoNot.fromEmpId)?.SessionId
                 let data = await customController.stockTransferRequest(infoNot.body, session)
-                io.to(roomId.socket).emit(data?.status ? 'successStockTransfer' : 'conflictStockTransfer', data?.status ? { status: true } : { status: false, error: errMessage })
+                io.to(roomId.socket).emit(data?.status ? 'successStockTransfer' : 'conflictStockTransfer', data?.status ? { status: true } : { status: false, message: errMessage })
                 if (data?.status) {
                     deleteNotification(infoNot.uid)
                 }

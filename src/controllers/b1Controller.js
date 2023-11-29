@@ -71,12 +71,6 @@ class b1Controller {
                 return axios
                     .get(req.originalUrl)
                     .then(({ data }) => {
-                        if (b1Api == 'StockTransfers') {
-                            const sessionId = req.cookies['B1SESSION'];
-                            const sessionData = findSession(sessionId);
-                            let notification = infoNotification().find(item => item.fromEmpId == sessionData?.empID)
-                            data.value = notification ? [...data.value, notification] : data.value
-                        }
                         return res.status(200).json(data);
                     })
                     .catch(async (err) => {
@@ -145,8 +139,17 @@ class b1Controller {
                 let uid = randomUUID()
                 let toEmpId = infoUser().sessions.find((item) => item.wrh == get(req, 'body.ToWarehouse'))?.empID
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
-                writeNotification({ body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
-                return res.status(201).send({ status: true })
+                if (toEmpId && qualityEmpId) {
+                    writeNotification({ body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
+                    return res.status(201).send({ status: true })
+                }
+                else if (!toEmpId) {
+                    return res.status(404).send({ status: false, message: 'Warehouse Employe not found' })
+                }
+                else if (!qualityEmpId) {
+                    return res.status(404).send({ status: false, message: 'Quality Controller not found' })
+                }
+
             }
             else {
                 return res.status(401).send()
