@@ -1,7 +1,8 @@
 const { CREDENTIALS } = require("../credentials");
 const Axios = require("axios");
 const https = require("https");
-const { findSession, findUserPermissions } = require("../helpers");
+const { findSession, findUserPermissions, updateEmpWrh, infoNotification } = require("../helpers");
+const { get } = require("lodash");
 
 class CustomController {
     async uiLogin({ UserName, Password, Company }) {
@@ -114,7 +115,6 @@ class CustomController {
     getUserInfo = async ({ headers }, { empID }) => {
         const permissions = await findUserPermissions(empID)
         const branchInfo = await this.getUserBranchInfo(headers, empID)
-
         return {
             ...branchInfo.data.value[0],
             Permissions: permissions,
@@ -132,21 +132,19 @@ class CustomController {
                 rejectUnauthorized: false,
             }),
         });
-        return await axios.get("https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/$crossjoin(EmployeesInfo, CustomBranches)?$expand=EmployeesInfo($select=EmployeeID,FirstName,LastName,SalesPersonCode),CustomBranches($select=DocEntry,U_Name,U_CashAccountUzs,U_CashAccountUsd,U_CardAccount,U_TransAccount,U_Warehouse)&$filter=EmployeesInfo/U_Branch eq CustomBranches/DocEntry and EmployeesInfo/EmployeeID eq " + empID)
+        return await axios.get("https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/$crossjoin(EmployeesInfo, CustomBranches)?$expand=EmployeesInfo($select=EmployeeID,FirstName,LastName,SalesPersonCode,JobTitle),CustomBranches($select=DocEntry,U_Name,U_CashAccountUzs,U_CashAccountUsd,U_CardAccount,U_TransAccount,U_Warehouse)&$filter=EmployeesInfo/U_Branch eq CustomBranches/DocEntry and EmployeesInfo/EmployeeID eq " + empID)
     }
 
     userData = async (req, res, next) => {
         try {
             const sessionId = req.cookies['B1SESSION'];
-
             const sessionData = findSession(sessionId);
             if (!sessionData) {
                 return res.status(401).send()
             }
-
             try {
-
                 const ret = await this.getUserInfo(req, sessionData)
+                updateEmpWrh({ empID: get(ret, 'EmployeesInfo.EmployeeID'), wrh: get(ret, 'CustomBranches.U_Warehouse'), jobTitle: get(ret, 'EmployeesInfo.JobTitle') })
                 return res.status(200).json(ret);
             }
             catch (err) {
@@ -156,6 +154,60 @@ class CustomController {
         }
         catch (e) {
             return next(e)
+        }
+    }
+    notification = async (req, res, next) => {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+
+            const sessionData = findSession(sessionId);
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+
+            try {
+                let notification = []
+                if (sessionData?.jobTitle == 'qualitycontroller') {
+                    notification = infoNotification().filter(item => item.qualityEmpId == sessionData.empID)
+                }
+                else if (sessionData?.jobTitle == 'wrhmanager') {
+                    notification = infoNotification().filter(item => item.toEmpId == sessionData.empID)
+                }
+                return res.status(200).json(notification)
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+
+    async stockTransferRequest(body, token) {
+        try {
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud",
+                timeout: 30000,
+                headers: {
+                    Cookie: `B1SESSION=${token}; ROUTEID=.node2`,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .post('/ServiceLayer/b1s/v2/StockTransfers', body)
+                .then(({ data }) => {
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, errMessage: get(err, 'response.status', 500) }
+                });
+        }
+        catch (e) {
+            return { status: false, errMessage: e }
         }
     }
 

@@ -2,11 +2,13 @@
 const Axios = require("axios");
 const https = require("https");
 const { get, rest } = require("lodash");
+const { io, socket } = require("../config");
 const { CREDENTIALS } = require("../credentials");
-const { writeUser, saveSession } = require("../helpers");
+const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification } = require("../helpers");
 const CustomController = require("./customController");
 const Controller = require("./customController");
-
+const ShortUniqueId = require('short-unique-id');
+const { randomUUID } = new ShortUniqueId({ length: 10 });
 class b1Controller {
     async test(req, res, next) {
         try {
@@ -69,6 +71,12 @@ class b1Controller {
                 return axios
                     .get(req.originalUrl)
                     .then(({ data }) => {
+                        if (b1Api == 'StockTransfers') {
+                            const sessionId = req.cookies['B1SESSION'];
+                            const sessionData = findSession(sessionId);
+                            let notification = infoNotification().find(item => item.fromEmpId == sessionData?.empID)
+                            data.value = notification ? [...data.value, notification] : data.value
+                        }
                         return res.status(200).json(data);
                     })
                     .catch(async (err) => {
@@ -108,6 +116,41 @@ class b1Controller {
             }
             return res.status(404).json({ status: false, message: 'B1 Api not found' })
 
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    async StockTransfers(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let wrhRoomId = infoRoom().find(item => item?.wrh == get(req, 'body.ToWarehouse'))
+                let qualityControllerRoomId = infoRoom().find(item => item?.job == 'qualitycontroller')
+                if (wrhRoomId) {
+                    io.to(wrhRoomId.socket).emit('notification', {
+                        ...req.body,
+                        empId: get(sessionData, 'empID'),
+                        api: 'StockTransfers'
+                    })
+                }
+                if (qualityControllerRoomId) {
+                    io.to(qualityControllerRoomId.socket).emit('notification', {
+                        ...req.body,
+                        empId: get(sessionData, 'empID'),
+                        api: 'StockTransfers'
+                    })
+                }
+                let uid = randomUUID()
+                let toEmpId = infoUser().sessions.find((item) => item.wrh == get(req, 'body.ToWarehouse'))?.empID
+                let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
+                writeNotification({ body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
+                return res.status(201).send({ status: true })
+            }
+            else {
+                return res.status(401).send()
+            }
         }
         catch (e) {
             return next(e)

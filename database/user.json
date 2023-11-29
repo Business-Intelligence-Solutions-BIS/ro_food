@@ -100,7 +100,8 @@
             "empID": 1,
             "SessionId": "736dd398-6828-11ee-8000-005056984211",
             "startedAt": 1697205582905,
-            "SessionTimeout": 1500
+            "SessionTimeout": 1500,
+            "wrh": "A1"
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
@@ -112,11 +113,13 @@
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "d7f1c0d0-8c64-11ee-8000-005056984211",
+            "SessionId": "4c8c4b4e-8e91-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 7,
-            "startedAt": 1701007525589
+            "startedAt": 1701246527074,
+            "wrh": "S1",
+            "jobTitle": "wrhmanager"
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
@@ -136,11 +139,13 @@
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "be2aaa76-8c6a-11ee-8000-005056984211",
+            "SessionId": "7a5f7652-8e93-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 3,
-            "startedAt": 1701010066141
+            "startedAt": 1701247462889,
+            "wrh": "A1",
+            "jobTitle": "wrhmanager"
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
@@ -165,6 +170,16 @@
             "SessionTimeout": 1500,
             "empID": 11,
             "startedAt": 1700744053644
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "4328331a-8e91-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 6,
+            "startedAt": 1701246511519,
+            "wrh": "S5",
+            "jobTitle": "qualitycontroller"
         }
     ]
 }

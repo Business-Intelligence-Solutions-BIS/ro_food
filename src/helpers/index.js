@@ -10,6 +10,78 @@ function writeUser(userData) {
     );
 }
 
+function infoRoom() {
+    let docs = fs.readFileSync(
+        path.join(process.cwd(), "database", "room.json"),
+        "UTF-8"
+    );
+    docs = docs ? JSON.parse(docs) : [];
+    return docs;
+}
+
+function updateRoom(userData) {
+    let users = infoRoom();
+    let index = users.findIndex((item) => item.empId === userData.empId);
+    if (index != -1) {
+        users[index] = { ...users[index], ...userData };
+    }
+    else {
+        users = [...users, userData]
+    }
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "room.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+
+function deleteRoom(empId) {
+    let users = infoRoom();
+    users = users.filter(item => item.empId != empId)
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "room.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+function updateNotification(uid, data) {
+    let users = infoNotification();
+    let index = users.findIndex((item) => item.uid == uid);
+    users[index] = { ...users[index], ...data };
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "room.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+
+
+function infoNotification() {
+    let docs = fs.readFileSync(
+        path.join(process.cwd(), "database", "notification.json"),
+        "UTF-8"
+    );
+    docs = docs ? JSON.parse(docs) : [];
+    return docs;
+}
+
+function writeNotification(userData) {
+    let users = infoNotification();
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "notification.json"),
+        JSON.stringify([...users, userData], null, 4)
+    );
+}
+
+
+function deleteNotification(uid) {
+    let users = infoNotification();
+    users = users.filter(item => item.uid != uid)
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "notification.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+
+
+
 function infoUser() {
     let docs = fs.readFileSync(
         path.join(process.cwd(), "database", "user.json"),
@@ -102,6 +174,23 @@ function saveSession(session) {
 }
 
 
+function updateEmpWrh({ empID, wrh, jobTitle }) {
+    let db = infoUser()
+
+    const oldSessionI = db.sessions.findIndex((item) => item.empID === empID)
+
+    if (oldSessionI !== -1) {
+        db.sessions[oldSessionI] = { ...db.sessions[oldSessionI], wrh, jobTitle }
+    }
+    fs.writeFileSync(path.join(process.cwd(), "database", "user.json"),
+        JSON.stringify(db, null, 4));
+}
+
+
+
+
+
+
 module.exports = {
     writeUser,
     infoUser,
@@ -111,4 +200,13 @@ module.exports = {
     formatPermissions,
     getUPermissionsBySession,
     saveSession,
+    infoRoom,
+    infoNotification,
+    writeNotification,
+    deleteRoom,
+    updateRoom,
+    updateNotification,
+    updateNotification,
+    updateEmpWrh,
+    deleteNotification
 }

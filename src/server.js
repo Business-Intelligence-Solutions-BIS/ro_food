@@ -1,11 +1,12 @@
-const express = require('express')
+
 const cors = require('cors')
 const router = require('./routes/b1Router')
 const path = require('path')
-const PORT = process.env.PORT || 3000
+const PORT = 5000
 const cookieParser = require('cookie-parser')
+const { app, httpServer, express } = require('./config')
 
-const app = express()
+
 
 app.use(cors())
 app.use(express.json())
@@ -15,10 +16,9 @@ app.use(router)
 
 
 
-
 const start = async () => {
     try {
-        app.listen(PORT, () => console.log(`Server started on port ${PORT}`))
+        httpServer.listen(PORT, () => console.log('Server is running http://localhost:' + PORT))
     } catch (e) {
         console.log(e)
     }
