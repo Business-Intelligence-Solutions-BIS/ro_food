@@ -71,6 +71,12 @@ class b1Controller {
                 return axios
                     .get(req.originalUrl)
                     .then(({ data }) => {
+                        if (b1Api == 'StockTransfers') {
+                            const sessionId = req.cookies['B1SESSION'];
+                            const sessionData = findSession(sessionId);
+                            let notification = infoNotification().filter(item => item.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')
+                            data.value = notification?.length ? [...data.value, ...notification.body, ...notification] : data.value
+                        }
                         return res.status(200).json(data);
                     })
                     .catch(async (err) => {
@@ -84,6 +90,7 @@ class b1Controller {
             return next(e)
         }
     }
+
 
     async post(req, res, next) {
         try {
@@ -115,6 +122,7 @@ class b1Controller {
             return next(e)
         }
     }
+
     async StockTransfers(req, res, next) {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -126,14 +134,18 @@ class b1Controller {
                     io.to(wrhRoomId.socket).emit('notification', {
                         ...req.body,
                         empId: get(sessionData, 'empID'),
-                        api: 'StockTransfers'
+                        api: 'StockTransfers',
+                        path: 'notification',
+                        title: 'На утверждении'
                     })
                 }
                 if (qualityControllerRoomId) {
                     io.to(qualityControllerRoomId.socket).emit('notification', {
                         ...req.body,
                         empId: get(sessionData, 'empID'),
-                        api: 'StockTransfers'
+                        api: 'StockTransfers',
+                        path: 'notification',
+                        title: 'На утверждении'
                     })
                 }
                 let uid = randomUUID()

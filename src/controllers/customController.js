@@ -201,7 +201,12 @@ class CustomController {
                 return res.status(401).send()
             }
             try {
-                let notification = [...new Set(infoNotification().map(item => item.api))]
+                let obj = {
+                    'StockTransfers': `Перемещение запасов`
+                }
+                let notification = [...new Set(infoNotification().map(item => item.api))].map(item => {
+                    return { title: obj[item], api: item }
+                })
                 return res.status(200).json(notification)
             }
             catch (err) {
@@ -216,6 +221,10 @@ class CustomController {
 
     async stockTransferRequest(body, token) {
         try {
+            body.StockTransferLines = body.StockTransferLines.map(item => {
+                delete item.ItemName
+                return item
+            })
             const axios = Axios.create({
                 baseURL: "https://su26-02.sb1.cloud",
                 timeout: 30000,
@@ -232,11 +241,123 @@ class CustomController {
                     return { status: true, data }
                 })
                 .catch(async (err) => {
-                    return { status: false, message: get(err, 'response.status', 500) }
+                    return { status: false, message: get(err, 'response.data', 'error') }
                 });
         }
         catch (e) {
             return { status: false, message: e }
+        }
+    }
+
+    getBatch = async (token) => {
+        try {
+            const sessionData = findSession(token);
+            let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 1 
+
+GET /b1s/v1/PurchaseRequests/$count?$filter=DocumentsOwner eq ${sessionData?.empID}
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c 
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 2 
+
+GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWarehouse eq '${sessionData?.wrh}'
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--
+            `
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud",
+                timeout: 30000,
+                headers: {
+                    'Content-Type': "multipart/mixed;boundary=batch_36522ad7-fc75-4b56-8c71-56071383e77c",
+                    'Cookie': `B1SESSION=${token}; ROUTEID=.node2`,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .post('/ServiceLayer/b1s/v2/$batch', body)
+                .then(({ data }) => {
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, message: get(err, 'response.data', 'error') }
+                });
+        }
+        catch (e) {
+            return { status: false, message: e }
+        }
+    }
+
+    menu = async (req, res, next) => {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+            let purchaseReqCount = 0
+            let strockTransferCount = 0
+
+            let info = await this.getBatch(sessionData.SessionId)
+            if (info?.status) {
+                let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                let match = info.data.match(regexPattern);
+                let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                purchaseReqCount = countList[0]
+                strockTransferCount = countList[1]
+            }
+            try {
+                let obj = {
+                    'wrhmanager': [
+                        {
+                            id: 1,
+                            title: 'Заявка на закупку',
+                            count: purchaseReqCount,
+                            path: 'purchaseRequest'
+                        },
+                        {
+                            id: 2,
+                            title: 'Перемещение запасов',
+                            count: +strockTransferCount + (infoNotification().filter(item => item?.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')?.length || 0),
+                            path: 'inventoryTransfer'
+                        },
+                        {
+                            id: 3,
+                            title: 'Поступление товаров',
+                            count: 0,
+                            path: 'buy'
+                        },
+                        {
+                            id: 4,
+                            title: 'На утверждении',
+                            count: infoNotification().filter(item => item?.toEmpId == sessionData?.empID)?.length || 0,
+                            path: 'notificationMenu'
+                        }
+                    ],
+                    'qualitycontroller': [
+                        {
+                            id: 4,
+                            title: 'На утверждении',
+                            count: infoNotification().filter(item => item?.qualityEmpId == sessionData?.empID)?.length || 0,
+                        }
+                    ]
+                }
+                return res.status(200).json(obj[sessionData.jobTitle])
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
         }
     }
 

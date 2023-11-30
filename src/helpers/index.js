@@ -47,7 +47,7 @@ function updateNotification(uid, data) {
     let index = users.findIndex((item) => item.uid == uid);
     users[index] = { ...users[index], ...data };
     fs.writeFileSync(
-        path.join(process.cwd(), "database", "room.json"),
+        path.join(process.cwd(), "database", "notification.json"),
         JSON.stringify(users, null, 4)
     );
 }
@@ -164,7 +164,7 @@ function saveSession(session) {
     const oldSessionI = db.sessions.findIndex(({ empID }) => empID === session.empID)
 
     if (oldSessionI !== -1) {
-        db.sessions[oldSessionI] = session
+        db.sessions[oldSessionI] = { ...db.sessions[oldSessionI], ...session }
     } else {
         db.sessions.push(session)
     }

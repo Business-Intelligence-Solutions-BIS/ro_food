@@ -21,15 +21,18 @@ io.on('connection', (socketIo) => {
         if (infoNot) {
             updateNotification(uid, Object.fromEntries([[job, 2]]))
             let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
-            let infoNot = infoNotification().find(item => item.uid == uid)
-
-            io.to(roomId.socket).emit('confirmedStockTransfer', { ...infoNot, confirmed: job })
-            if (infoNot.wrhmanager == 2 && infoNot.qualitycontroller == 2) {
-                let session = infoUser().sessions.find((item) => item.empID === infoNot.fromEmpId)?.SessionId
-                let data = await customController.stockTransferRequest(infoNot.body, session)
-                io.to(roomId.socket).emit(data?.status ? 'successStockTransfer' : 'conflictStockTransfer', data?.status ? { status: true } : { status: false, message: errMessage })
+            let infoNotNew = infoNotification().find(item => item.uid == uid)
+            if (roomId) {
+                io.to(roomId.socket).emit('confirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "inventoryTransfer", title: 'Перемещение запасов' })
+            }
+            if (infoNotNew.wrhmanager == 2 && infoNotNew.qualitycontroller == 2) {
+                let session = infoUser().sessions.find((item) => item.empID === infoNotNew.fromEmpId)?.SessionId
+                let data = await customController.stockTransferRequest(infoNotNew.body, session)
+                if (roomId) {
+                    io.to(roomId.socket).emit('statusStockTransfer', data?.status ? { status: true } : { status: false, message: errMessage })
+                }
                 if (data?.status) {
-                    deleteNotification(infoNot.uid)
+                    deleteNotification(infoNotNew.uid)
                 }
             }
         }
@@ -41,8 +44,10 @@ io.on('connection', (socketIo) => {
         if (infoNot) {
             updateNotification(uid, Object.fromEntries([[job, 1]]))
             let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
-            let infoNot = infoNotification().find(item => item.uid == uid)
-            io.to(roomId.socket).emit('confirmedStockTransfer', { ...infoNot, notConfirmed: job })
+            let infoNotNew = infoNotification().find(item => item.uid == uid)
+            if (roomId) {
+                io.to(roomId.socket).emit('notconfirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "inventoryTransfer", title: 'Перемещение запасов' })
+            }
         }
     })
 })
