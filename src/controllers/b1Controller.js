@@ -4,10 +4,11 @@ const https = require("https");
 const { get, rest } = require("lodash");
 const { io, socket } = require("../config");
 const { CREDENTIALS } = require("../credentials");
-const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification } = require("../helpers");
+const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification, writeMessage, updateNotification, deleteNotification } = require("../helpers");
 const CustomController = require("./customController");
 const Controller = require("./customController");
 const ShortUniqueId = require('short-unique-id');
+const customController = require("./customController");
 const { randomUUID } = new ShortUniqueId({ length: 10 });
 class b1Controller {
     async test(req, res, next) {
@@ -162,6 +163,62 @@ class b1Controller {
                     return res.status(404).send({ status: false, message: 'Quality Controller not found' })
                 }
 
+            }
+            else {
+                return res.status(401).send()
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    async StockTransfersStatus(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let infoNot = infoNotification().find(item => item.uid == uid)
+                let { status, job, uid } = req.body
+                if (infoNot) {
+                    if (infoNot[job] == 0) {
+                        if (status) {
+                            updateNotification(uid, Object.fromEntries([[job, 2]]))
+                            let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
+                            let infoNotNew = infoNotification().find(item => item.uid == uid)
+                            if (roomId) {
+                                io.to(roomId.socket).emit('confirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
+                            }
+                            if (infoNotNew.wrhmanager == 2 && infoNotNew.qualitycontroller == 2) {
+                                let session = infoUser().sessions.find((item) => item.empID === infoNotNew.fromEmpId)?.SessionId
+                                let data = await customController.stockTransferRequest(infoNotNew.body, session)
+                                if (roomId) {
+                                    io.to(roomId.socket).emit('statusStockTransfer', data?.status ? { status: true, message: 'Success', path: "message", ...infoNotNew } : { status: false, message: data?.message, path: "message", ...infoNotNew })
+                                }
+                                if (data?.status) {
+                                    writeMessage({ error: false, sap: true, ...infoNotNew })
+                                    deleteNotification(infoNotNew.uid)
+                                }
+                                else {
+                                    writeMessage({ error: true, errMessage: data?.message, sap: false, ...infoNotNew })
+                                    deleteNotification(infoNotNew.uid)
+                                }
+                            }
+                        }
+                        else {
+                            updateNotification(uid, Object.fromEntries([[job, 1]]))
+                            let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
+                            let infoNotNew = infoNotification().find(item => item.uid == uid)
+                            if (roomId) {
+                                io.to(roomId.socket).emit('notconfirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
+                            }
+                            writeMessage({ error: true, errMessage: data?.message, sap: false, ...infoNotNew })
+                            deleteNotification(infoNotNew.uid)
+                        }
+                    }
+                }
+                else {
+                    return res.status(404).send({ status: false, message: 'Topilmadi' })
+                }
             }
             else {
                 return res.status(401).send()

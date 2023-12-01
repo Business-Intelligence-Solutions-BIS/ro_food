@@ -52,6 +52,32 @@ function updateNotification(uid, data) {
     );
 }
 
+function infoMessage() {
+    let docs = fs.readFileSync(
+        path.join(process.cwd(), "database", "message.json"),
+        "UTF-8"
+    );
+    docs = docs ? JSON.parse(docs) : [];
+    return docs;
+}
+
+function writeMessage(userData) {
+    let users = infoNotification();
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "message.json"),
+        JSON.stringify([...users, userData], null, 4)
+    );
+}
+
+
+function deleteMessage(uid) {
+    let users = infoNotification();
+    users = users.filter(item => item.uid != uid)
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "message.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
 
 function infoNotification() {
     let docs = fs.readFileSync(
@@ -208,5 +234,8 @@ module.exports = {
     updateNotification,
     updateNotification,
     updateEmpWrh,
-    deleteNotification
+    deleteNotification,
+    infoMessage,
+    writeMessage,
+    deleteMessage
 }

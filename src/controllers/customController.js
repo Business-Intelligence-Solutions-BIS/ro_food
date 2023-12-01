@@ -1,7 +1,7 @@
 const { CREDENTIALS } = require("../credentials");
 const Axios = require("axios");
 const https = require("https");
-const { findSession, findUserPermissions, updateEmpWrh, infoNotification } = require("../helpers");
+const { findSession, findUserPermissions, updateEmpWrh, infoNotification, infoMessage } = require("../helpers");
 const { get, groupBy } = require("lodash");
 
 class CustomController {
@@ -339,6 +339,12 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
                             title: 'На утверждении',
                             count: infoNotification().filter(item => item?.toEmpId == sessionData?.empID)?.length || 0,
                             path: 'notificationMenu'
+                        },
+                        {
+                            id: 5,
+                            title: "Xabarlar",
+                            count: infoMessage().filter(item => item.fromEmpId == sessionData.empID)?.length || 0,
+                            path: 'message'
                         }
                     ],
                     'qualitycontroller': [
@@ -350,6 +356,27 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
                     ]
                 }
                 return res.status(200).json(obj[sessionData.jobTitle])
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    message = async (req, res, next) => {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+
+            try {
+                let data = infoMessage().filter(item => item.fromEmpId == sessionData.empID)
+                return res.status(200).json(data)
             }
             catch (err) {
                 return res.status(err?.response?.status || 400).json(err?.response?.data || err)
