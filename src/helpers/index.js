@@ -62,7 +62,7 @@ function infoMessage() {
 }
 
 function writeMessage(userData) {
-    let users = infoNotification();
+    let users = infoMessage();
     fs.writeFileSync(
         path.join(process.cwd(), "database", "message.json"),
         JSON.stringify([...users, userData], null, 4)

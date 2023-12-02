@@ -343,7 +343,7 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
                         {
                             id: 5,
                             title: "Xabarlar",
-                            count: infoMessage().filter(item => item.fromEmpId == sessionData.empID)?.length || 0,
+                            count: infoMessage().filter(item => item.fromEmpId == sessionData?.empID)?.length || 0,
                             path: 'message'
                         }
                     ],

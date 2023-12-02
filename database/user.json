@@ -98,21 +98,21 @@
     "sessions": [
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "fe23c48c-8f80-11ee-8000-005056984211",
+            "SessionId": "6bbdb402-90f4-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 7,
-            "startedAt": 1701349474808,
+            "startedAt": 1701509001948,
             "wrh": "S1",
             "jobTitle": "wrhmanager"
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "825d9330-8f8c-11ee-8000-005056984211",
+            "SessionId": "11983056-90fe-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 3,
-            "startedAt": 1701354420782,
+            "startedAt": 1701513145946,
             "wrh": "A1",
             "jobTitle": "wrhmanager"
         },
