@@ -153,7 +153,7 @@ class b1Controller {
                 let toEmpId = infoUser().sessions.find((item) => item.wrh == get(req, 'body.ToWarehouse'))?.empID
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
                 if (toEmpId && qualityEmpId) {
-                    writeNotification({ body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
+                    writeNotification({ date: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
                     return res.status(201).send({ status: true })
                 }
                 else if (!toEmpId) {
@@ -182,26 +182,17 @@ class b1Controller {
                 if (infoNot) {
                     if (infoNot[job] == 0) {
                         if (status) {
+                            updateNotification(uid, Object.fromEntries([[job, 2]]))
                             let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
                             let infoNotNew = infoNotification().find(item => item.uid == uid)
                             if (roomId) {
+                                console.log(roomId)
                                 io.to(roomId.socket).emit('confirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
                             }
-                            updateNotification(uid, Object.fromEntries([[job, 2]]))
                             if (infoNotNew.wrhmanager == 2 && infoNotNew.qualitycontroller == 2) {
-                                let session = infoUser().sessions.find((item) => item.empID === infoNotNew.fromEmpId)?.SessionId
-                                let data = await customController.stockTransferRequest(infoNotNew.body, session)
-                                if (roomId) {
-                                    io.to(roomId.socket).emit('statusStockTransfer', data?.status ? { status: true, message: 'Success', path: "message", ...infoNotNew } : { status: false, message: data?.message, path: "message", ...infoNotNew })
-                                }
-                                if (data?.status) {
-                                    writeMessage({ error: false, sap: true, ...infoNotNew })
-                                    deleteNotification(infoNotNew.uid)
-                                }
-                                else {
-                                    writeMessage({ ...infoNotNew, sap: false, error: true })
-                                }
+                                deleteNotification(infoNotNew.uid)
                             }
+                            writeMessage({ ...infoNotNew, date: new Date() })
                         }
                         else {
                             updateNotification(uid, Object.fromEntries([[job, 1]]))
@@ -210,7 +201,7 @@ class b1Controller {
                             if (roomId) {
                                 io.to(roomId.socket).emit('notconfirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
                             }
-                            writeMessage({ ...infoNotNew })
+                            writeMessage({ ...infoNotNew, date: new Date() })
                         }
                         return res.status(200).send()
                     }

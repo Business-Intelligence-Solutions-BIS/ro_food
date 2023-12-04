@@ -204,7 +204,7 @@ class CustomController {
                 let obj = {
                     'StockTransfers': `Перемещение запасов`
                 }
-                let notification = [...new Set(infoNotification().map(item => item.api))].map(item => {
+                let notification = [...new Set(infoNotification().filter(item => item.toEmpId == sessionData.empID || item.qualityEmpId == sessionData.empID).map(item => item.api))].map(item => {
                     return { title: obj[item], api: item }
                 })
                 return res.status(200).json(notification)
@@ -352,6 +352,7 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
                             id: 4,
                             title: 'На утверждении',
                             count: infoNotification().filter(item => item?.qualityEmpId == sessionData?.empID)?.length || 0,
+                            path: 'notificationMenu'
                         }
                     ]
                 }
