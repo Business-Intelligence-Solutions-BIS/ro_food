@@ -12,7 +12,7 @@ io.on('connection', (socketIo) => {
     socket.on('login', async ({ empId, wrh, job }) => {
         updateRoom({ empId, socket: socket.id, wrh, job })
     })
-    socket.on('disconnect', async ({ empId }) => {
+    socket.on('notactive', async ({ empId }) => {
         deleteRoom(empId)
     })
 

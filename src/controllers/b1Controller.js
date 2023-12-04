@@ -192,7 +192,7 @@ class b1Controller {
                             if (infoNotNew.wrhmanager == 2 && infoNotNew.qualitycontroller == 2) {
                                 deleteNotification(infoNotNew.uid)
                             }
-                            writeMessage({ ...infoNotNew, date: new Date() })
+                            writeMessage({ ...infoNotNew, date: new Date(), confirmed: job })
                         }
                         else {
                             updateNotification(uid, Object.fromEntries([[job, 1]]))
@@ -201,7 +201,7 @@ class b1Controller {
                             if (roomId) {
                                 io.to(roomId.socket).emit('notconfirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
                             }
-                            writeMessage({ ...infoNotNew, date: new Date() })
+                            writeMessage({ ...infoNotNew, date: new Date(), confirmed: job })
                         }
                         return res.status(200).send()
                     }
