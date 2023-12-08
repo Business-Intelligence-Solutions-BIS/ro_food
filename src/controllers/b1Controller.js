@@ -24,15 +24,16 @@ class b1Controller {
         try {
             delete req.headers.host
             delete req.headers['content-length']
-
             let ret = await CustomController.uiLogin(req.body)
             if (ret.status !== 200 && ret.status !== 201) {
+                console.log('tushdi error')
                 return res.status(ret.status || 400).send({
                     "error": {
                         "message": ret.data
                     }
                 });
             }
+
 
             if (ret.headers['set-cookie'] && ret.headers['set-cookie'][0]) {
                 ret.headers['set-cookie'][0] += '; Path=/'
@@ -47,7 +48,6 @@ class b1Controller {
             res.set({
                 ...ret.headers
             })
-
             return res.status(ret.status).send(ret.data)
         }
         catch (e) {
@@ -72,12 +72,6 @@ class b1Controller {
                 return axios
                     .get(req.originalUrl)
                     .then(({ data }) => {
-                        if (b1Api == 'StockTransfers') {
-                            const sessionId = req.cookies['B1SESSION'];
-                            const sessionData = findSession(sessionId);
-                            let notification = infoNotification().filter(item => item.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')
-                            data.value = notification?.length ? [...data.value, ...notification] : data.value
-                        }
                         return res.status(200).json(data);
                     })
                     .catch(async (err) => {
@@ -91,7 +85,29 @@ class b1Controller {
             return next(e)
         }
     }
+    async StockTransfersGet(req, res, next) {
+        try {
+            let { b1Api } = req.params
+            delete req.headers.host
+            delete req.headers['content-length']
+            if (b1Api) {
+                const sessionId = req.cookies['B1SESSION'];
+                const sessionData = findSession(sessionId);
+                let notification = infoNotification().filter(item => item.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')
+                let actNotification = notification
+                notification = notification.slice(skip, +skip + 20)
+                let len = notification.length
+                let slLen = actNotification.slice(skip, +skip + 21).length
+                notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
+                return res.status(200).json(notification);
+            }
+            return res.status(404).json({ status: false, message: 'B1 Api not found' })
 
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
 
     async post(req, res, next) {
         try {
@@ -172,6 +188,113 @@ class b1Controller {
             return next(e)
         }
     }
+
+    async PurchaseOrders(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let qualityControllerRoomId = infoRoom().find(item => item?.job == 'qualitycontroller')
+                if (qualityControllerRoomId) {
+                    io.to(qualityControllerRoomId.socket).emit('notification', {
+                        ...req.body,
+                        empId: get(sessionData, 'empID'),
+                        api: 'PurchaseOrders',
+                        path: 'notification',
+                        title: 'На утверждении'
+                    })
+                }
+                let uid = randomUUID()
+                let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
+                if (qualityEmpId) {
+                    writeNotification({ date: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, api: 'PurchaseOrders', qualitycontroller: 0 })
+                    return res.status(201).send({ status: true })
+                }
+                else if (!qualityEmpId) {
+                    return res.status(404).send({ status: false, message: 'Quality Controller not found' })
+                }
+
+            }
+            else {
+                return res.status(401).send()
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    async PurchaseOrdersStatus(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let { status, job, uid } = req.body
+                let infoNot = infoNotification().find(item => item.uid == uid)
+                if (infoNot) {
+                    if (infoNot[job] == 0) {
+                        if (status) {
+                            updateNotification(uid, Object.fromEntries([[job, 2]]))
+                            let roomId = infoRoom().find(item => item.empId == infoNot.DocumentsOwner)
+                            let infoNotNew = infoNotification().find(item => item.uid == uid)
+                            if (roomId) {
+                                io.to(roomId.socket).emit('confirmedPurchase', { ...infoNotNew, confirmed: job, path: "message", title: 'Поступление товаров' })
+                            }
+                            if (infoNotNew.qualitycontroller == 2) {
+                                deleteNotification(infoNotNew.uid)
+                            }
+                            writeMessage({ ...infoNotNew, date: new Date(), confirmed: job })
+                        }
+                        else {
+                            updateNotification(uid, Object.fromEntries([[job, 1]]))
+                            let roomId = infoRoom().find(item => item.empId == infoNot.DocumentsOwner)
+                            let infoNotNew = infoNotification().find(item => item.uid == uid)
+                            if (roomId) {
+                                io.to(roomId.socket).emit('notconfirmedPurchase', { ...infoNotNew, confirmed: job, path: "message", title: 'Поступление товаров' })
+                            }
+                            writeMessage({ ...infoNotNew, date: new Date(), confirmed: job })
+                        }
+                        return res.status(200).send()
+                    }
+                    else {
+                        return res.status(403).send({ message: 'Tasdiqlay olmaysiz' })
+                    }
+                }
+                else {
+                    return res.status(404).send({ status: false, message: 'uid Topilmadi' })
+                }
+            }
+            else {
+                return res.status(401).send()
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    async PurchaseOrdersGet(req, res, next) {
+        try {
+            let { b1Api } = req.params
+            delete req.headers.host
+            delete req.headers['content-length']
+            if (b1Api) {
+                const sessionId = req.cookies['B1SESSION'];
+                const sessionData = findSession(sessionId);
+                let notification = infoNotification().filter(item => item?.DocumentsOwner == sessionData?.empID && item.api == 'PurchaseOrders')
+                let actNotification = notification
+                notification = notification.slice(skip, +skip + 20)
+                let len = notification.length
+                let slLen = actNotification.slice(skip, +skip + 21).length
+                notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
+                return res.status(200).json(notification);
+            }
+            return res.status(404).json({ status: false, message: 'B1 Api not found' })
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+
     async StockTransfersStatus(req, res, next) {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -186,7 +309,6 @@ class b1Controller {
                             let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
                             let infoNotNew = infoNotification().find(item => item.uid == uid)
                             if (roomId) {
-                                console.log(roomId)
                                 io.to(roomId.socket).emit('confirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
                             }
                             if (infoNotNew.wrhmanager == 2 && infoNotNew.qualitycontroller == 2) {

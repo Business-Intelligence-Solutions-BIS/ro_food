@@ -171,10 +171,10 @@ class CustomController {
             try {
                 let notification = []
                 if (sessionData?.jobTitle == 'qualitycontroller') {
-                    notification = infoNotification().filter(item => item.qualityEmpId == sessionData.empID && item.api == api)
+                    notification = infoNotification().filter(item => item?.qualityEmpId == sessionData.empID && item?.api == api)
                 }
                 else if (sessionData?.jobTitle == 'wrhmanager') {
-                    notification = infoNotification().filter(item => item.toEmpId == sessionData.empID && item.api == api)
+                    notification = infoNotification().filter(item => item?.toEmpId == sessionData.empID && item?.api == api)
                 }
                 let actNotification = notification
                 notification = notification.slice(skip, +skip + 20)
@@ -204,7 +204,7 @@ class CustomController {
                 let obj = {
                     'StockTransfers': `Перемещение запасов`
                 }
-                let notification = [...new Set(infoNotification().filter(item => item.toEmpId == sessionData.empID || item.qualityEmpId == sessionData.empID).map(item => item.api))].map(item => {
+                let notification = [...new Set(infoNotification().filter(item => item?.toEmpId == sessionData.empID || item?.qualityEmpId == sessionData.empID).map(item => item.api))].map(item => {
                     return { title: obj[item], api: item }
                 })
                 return res.status(200).json(notification)
@@ -376,8 +376,13 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
             }
 
             try {
-                let data = infoMessage().filter(item => item.fromEmpId == sessionData.empID)
-                return res.status(200).json(data)
+                let notification = infoMessage().filter(item => item.fromEmpId == sessionData.empID)
+                let actNotification = notification
+                notification = notification.slice(skip, +skip + 20)
+                let len = notification.length
+                let slLen = actNotification.slice(skip, +skip + 21).length
+                notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
+                return res.status(200).json(notification)
             }
             catch (err) {
                 return res.status(err?.response?.status || 400).json(err?.response?.data || err)
