@@ -202,10 +202,52 @@ class CustomController {
             }
             try {
                 let obj = {
-                    'StockTransfers': `Перемещение запасов`
+                    'StockTransfers': {
+                        name: `Перемещение запасов`,
+                        path: 'notificationStockTransfers'
+                    },
+                    'PurchaseOrders': {
+                        name: 'Поступление товаров',
+                        path: 'notificationPurchaseOrders'
+                    }
                 }
                 let notification = [...new Set(infoNotification().filter(item => item?.toEmpId == sessionData.empID || item?.qualityEmpId == sessionData.empID).map(item => item.api))].map(item => {
-                    return { title: obj[item], api: item }
+                    return { title: obj[item]?.name, api: item, path: obj[item]?.path }
+                })
+                return res.status(200).json(notification)
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    messageMenu = async (req, res, next) => {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+            try {
+                let obj = {
+                    'StockTransfers': {
+                        name: `Перемещение запасов`,
+                        path: 'notificationStockTransfers',
+                        apiPath: 'notification'
+                    },
+                    'PurchaseOrders': {
+                        name: 'Поступление товаров',
+                        path: 'notificationPurchaseOrders',
+                        apiPath: 'message'
+
+                    }
+                }
+                let notification = [...new Set(infoMessage().filter(item => item?.fromEmpId == sessionData.empID).map(item => item.api))].map(item => {
+                    return { title: obj[item]?.name, api: item, path: obj[item]?.path, apiPath: obj[item]?.apiPath }
                 })
                 return res.status(200).json(notification)
             }
@@ -342,7 +384,7 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
                         },
                         {
                             id: 5,
-                            title: "Xabarlar",
+                            title: "Сообщение",
                             count: infoMessage().filter(item => item.fromEmpId == sessionData?.empID)?.length || 0,
                             path: 'message'
                         }
@@ -371,12 +413,13 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
         try {
             const sessionId = req.cookies['B1SESSION'];
             const sessionData = findSession(sessionId);
+            let { skip = 0, api } = req.query
             if (!sessionData) {
                 return res.status(401).send()
             }
 
             try {
-                let notification = infoMessage().filter(item => item.fromEmpId == sessionData.empID)
+                let notification = infoMessage().filter(item => item.fromEmpId == sessionData.empID && item.api == api)
                 let actNotification = notification
                 notification = notification.slice(skip, +skip + 20)
                 let len = notification.length

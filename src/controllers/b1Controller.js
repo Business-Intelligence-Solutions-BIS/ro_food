@@ -87,22 +87,18 @@ class b1Controller {
     }
     async StockTransfersGet(req, res, next) {
         try {
-            let { b1Api } = req.params
+            let { skip = 0 } = req.query
             delete req.headers.host
             delete req.headers['content-length']
-            if (b1Api) {
-                const sessionId = req.cookies['B1SESSION'];
-                const sessionData = findSession(sessionId);
-                let notification = infoNotification().filter(item => item.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')
-                let actNotification = notification
-                notification = notification.slice(skip, +skip + 20)
-                let len = notification.length
-                let slLen = actNotification.slice(skip, +skip + 21).length
-                notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
-                return res.status(200).json(notification);
-            }
-            return res.status(404).json({ status: false, message: 'B1 Api not found' })
-
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            let notification = infoNotification().filter(item => item.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')
+            let actNotification = notification
+            notification = notification.slice(skip, +skip + 20)
+            let len = notification.length
+            let slLen = actNotification.slice(skip, +skip + 21).length
+            notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
+            return res.status(200).json(notification);
         }
         catch (e) {
             return next(e)
@@ -152,7 +148,7 @@ class b1Controller {
                         ...req.body,
                         empId: get(sessionData, 'empID'),
                         api: 'StockTransfers',
-                        path: 'notification',
+                        path: 'notificationStockTransfers',
                         title: 'На утверждении'
                     })
                 }
@@ -161,7 +157,7 @@ class b1Controller {
                         ...req.body,
                         empId: get(sessionData, 'empID'),
                         api: 'StockTransfers',
-                        path: 'notification',
+                        path: 'notificationStockTransfers',
                         title: 'На утверждении'
                     })
                 }
@@ -169,7 +165,7 @@ class b1Controller {
                 let toEmpId = infoUser().sessions.find((item) => item.wrh == get(req, 'body.ToWarehouse'))?.empID
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
                 if (toEmpId && qualityEmpId) {
-                    writeNotification({ date: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
+                    writeNotification({ date: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, path: 'notificationStockTransfers', api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
                     return res.status(201).send({ status: true })
                 }
                 else if (!toEmpId) {
@@ -200,14 +196,14 @@ class b1Controller {
                         ...req.body,
                         empId: get(sessionData, 'empID'),
                         api: 'PurchaseOrders',
-                        path: 'notification',
+                        path: 'notificationPurchaseOrders',
                         title: 'На утверждении'
                     })
                 }
                 let uid = randomUUID()
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
                 if (qualityEmpId) {
-                    writeNotification({ date: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, api: 'PurchaseOrders', qualitycontroller: 0 })
+                    writeNotification({ date: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, path: 'notificationPurchaseOrders', api: 'PurchaseOrders', qualitycontroller: 0 })
                     return res.status(201).send({ status: true })
                 }
                 else if (!qualityEmpId) {
@@ -228,12 +224,13 @@ class b1Controller {
             const sessionId = req.cookies['B1SESSION'];
             const sessionData = findSession(sessionId);
             if (sessionData) {
-                let { status, job, uid } = req.body
+                let { status, job, uid, DocumentLines } = req.body
                 let infoNot = infoNotification().find(item => item.uid == uid)
                 if (infoNot) {
                     if (infoNot[job] == 0) {
                         if (status) {
                             updateNotification(uid, Object.fromEntries([[job, 2]]))
+                            updateNotification(uid, { body: { ...infoNot.body, DocumentLines } })
                             let roomId = infoRoom().find(item => item.empId == infoNot.DocumentsOwner)
                             let infoNotNew = infoNotification().find(item => item.uid == uid)
                             if (roomId) {
@@ -246,6 +243,8 @@ class b1Controller {
                         }
                         else {
                             updateNotification(uid, Object.fromEntries([[job, 1]]))
+                            updateNotification(uid, { body: { ...infoNot.body, DocumentLines } })
+
                             let roomId = infoRoom().find(item => item.empId == infoNot.DocumentsOwner)
                             let infoNotNew = infoNotification().find(item => item.uid == uid)
                             if (roomId) {
@@ -273,13 +272,13 @@ class b1Controller {
     }
     async PurchaseOrdersGet(req, res, next) {
         try {
-            let { b1Api } = req.params
             delete req.headers.host
             delete req.headers['content-length']
-            if (b1Api) {
-                const sessionId = req.cookies['B1SESSION'];
-                const sessionData = findSession(sessionId);
-                let notification = infoNotification().filter(item => item?.DocumentsOwner == sessionData?.empID && item.api == 'PurchaseOrders')
+            const sessionId = req.cookies['B1SESSION'];
+            let { skip = 0 } = req.query
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let notification = infoNotification().filter(item => item?.fromEmpId == sessionData?.empID && item.api == 'PurchaseOrders')
                 let actNotification = notification
                 notification = notification.slice(skip, +skip + 20)
                 let len = notification.length
@@ -287,7 +286,9 @@ class b1Controller {
                 notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
                 return res.status(200).json(notification);
             }
-            return res.status(404).json({ status: false, message: 'B1 Api not found' })
+            else {
+                return res.status(401).send()
+            }
 
         }
         catch (e) {
