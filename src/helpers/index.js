@@ -1,6 +1,7 @@
 
 
 const fs = require("fs");
+const { get } = require("lodash");
 const path = require("path");
 function writeUser(userData) {
     let users = infoUser();
@@ -20,18 +21,20 @@ function infoRoom() {
 }
 
 function updateRoom(userData) {
-    let users = infoRoom();
-    let index = users.findIndex((item) => item.empId === userData.empId);
-    if (index != -1) {
-        users[index] = { ...users[index], ...userData };
+    if (get(userData, 'empId') && get(userData, 'socket')) {
+        let users = infoRoom();
+        let index = users.findIndex((item) => item.empId === userData.empId);
+        if (index != -1) {
+            users[index] = { ...users[index], ...userData };
+        }
+        else {
+            users = [...users, userData]
+        }
+        fs.writeFileSync(
+            path.join(process.cwd(), "database", "room.json"),
+            JSON.stringify(users, null, 4)
+        );
     }
-    else {
-        users = [...users, userData]
-    }
-    fs.writeFileSync(
-        path.join(process.cwd(), "database", "room.json"),
-        JSON.stringify(users, null, 4)
-    );
 }
 
 function deleteRoom(empId) {
@@ -52,6 +55,16 @@ function updateNotification(uid, data) {
     );
 }
 
+function updatePurchase(uid, data) {
+    let users = infoPurchase();
+    let index = users.findIndex((item) => item.uid == uid);
+    users[index] = { ...users[index], ...data };
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "purchase.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+
 function infoMessage() {
     let docs = fs.readFileSync(
         path.join(process.cwd(), "database", "message.json"),
@@ -67,6 +80,46 @@ function writeMessage(userData) {
         path.join(process.cwd(), "database", "message.json"),
         JSON.stringify([...users, userData], null, 4)
     );
+}
+function infoPurchase() {
+    let docs = fs.readFileSync(
+        path.join(process.cwd(), "database", "purchase.json"),
+        "UTF-8"
+    );
+    docs = docs ? JSON.parse(docs) : [];
+    return docs;
+}
+function writePurchase(userData) {
+    let users = infoPurchase();
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "purchase.json"),
+        JSON.stringify([...users, userData], null, 4)
+    );
+    return userData
+}
+
+function deletePurchase(uid) {
+    let users = infoPurchase();
+    users = users.filter(item => item.uid != uid)
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "purchase.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+function updatePurchaseTrue(arr = [], jobTitle) {
+    if (arr.length) {
+        let purchase = infoPurchase();
+        let result = purchase.map(item => {
+            if (jobTitle == 'wrhmanager') {
+                return { ...item, empSeen: (arr.includes(item.uid) ? true : item.empSeen) }
+            }
+            return { ...item, qualitySeen: (arr.includes(item.uid) ? true : item.qualitySeen) }
+        })
+        fs.writeFileSync(
+            path.join(process.cwd(), "database", "purchase.json"),
+            JSON.stringify(result, null, 4)
+        );
+    }
 }
 
 
@@ -206,12 +259,24 @@ function updateEmpWrh({ empID, wrh, jobTitle }) {
     const oldSessionI = db.sessions.findIndex((item) => item.empID === empID)
 
     if (oldSessionI !== -1) {
-        db.sessions[oldSessionI] = { ...db.sessions[oldSessionI], wrh, jobTitle }
+        db.sessions[oldSessionI] = { ...db.sessions[oldSessionI], wrh, jobTitle, PurchaseOrders: get(db.sessions[oldSessionI], 'PurchaseOrders', 0), PurchaseInvoices: get(db.sessions[oldSessionI], 'PurchaseInvoices', 0) }
     }
     fs.writeFileSync(path.join(process.cwd(), "database", "user.json"),
         JSON.stringify(db, null, 4));
 }
 
+
+function updateEmp(empID, data) {
+    let db = infoUser()
+
+    const oldSessionI = db.sessions.findIndex((item) => item.empID === empID)
+
+    if (oldSessionI !== -1) {
+        db.sessions[oldSessionI] = { ...db.sessions[oldSessionI], ...data }
+    }
+    fs.writeFileSync(path.join(process.cwd(), "database", "user.json"),
+        JSON.stringify(db, null, 4));
+}
 
 
 
@@ -237,5 +302,11 @@ module.exports = {
     deleteNotification,
     infoMessage,
     writeMessage,
-    deleteMessage
+    deleteMessage,
+    infoPurchase,
+    writePurchase,
+    deletePurchase,
+    updatePurchaseTrue,
+    updateEmp,
+    updatePurchase
 }

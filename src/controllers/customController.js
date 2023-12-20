@@ -1,7 +1,7 @@
 const { CREDENTIALS } = require("../credentials");
 const Axios = require("axios");
 const https = require("https");
-const { findSession, findUserPermissions, updateEmpWrh, infoNotification, infoMessage } = require("../helpers");
+const { findSession, findUserPermissions, updateEmpWrh, infoNotification, infoMessage, infoPurchase } = require("../helpers");
 const { get, groupBy } = require("lodash");
 
 class CustomController {
@@ -156,140 +156,72 @@ class CustomController {
             return next(e)
         }
     }
-    notification = async (req, res, next) => {
-        try {
-            const sessionId = req.cookies['B1SESSION'];
-            const sessionData = findSession(sessionId);
-            let { skip = 0, api } = req.query
-            if (!sessionData) {
-                return res.status(401).send()
-            }
-            if (!api) {
-                return res.status(404).send({ message: 'Api not found' })
-            }
+    // notification = async (req, res, next) => {
+    //     try {
+    //         const sessionId = req.cookies['B1SESSION'];
+    //         const sessionData = findSession(sessionId);
+    //         let { skip = 0, api } = req.query
+    //         if (!sessionData) {
+    //             return res.status(401).send()
+    //         }
+    //         if (!api) {
+    //             return res.status(404).send({ message: 'Api not found' })
+    //         }
 
-            try {
-                let notification = []
-                if (sessionData?.jobTitle == 'qualitycontroller') {
-                    notification = infoNotification().filter(item => item?.qualityEmpId == sessionData.empID && item?.api == api)
-                }
-                else if (sessionData?.jobTitle == 'wrhmanager') {
-                    notification = infoNotification().filter(item => item?.toEmpId == sessionData.empID && item?.api == api)
-                }
-                let actNotification = notification
-                notification = notification.slice(skip, +skip + 20)
-                let len = notification.length
-                let slLen = actNotification.slice(skip, +skip + 21).length
-                notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
-                return res.status(200).json(notification)
-            }
-            catch (err) {
-                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
-            }
+    //         try {
+    //             let notification = []
+    //             if (sessionData?.jobTitle == 'qualitycontroller') {
+    //                 notification = infoNotification().filter(item => item?.qualityEmpId == sessionData.empID && item?.api == api)
+    //             }
+    //             else if (sessionData?.jobTitle == 'wrhmanager') {
+    //                 notification = infoNotification().filter(item => item?.toEmpId == sessionData.empID && item?.api == api)
+    //             }
+    //             let actNotification = notification
+    //             notification = notification.slice(skip, +skip + 20)
+    //             let len = notification.length
+    //             let slLen = actNotification.slice(skip, +skip + 21).length
+    //             notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
+    //             return res.status(200).json(notification)
+    //         }
+    //         catch (err) {
+    //             return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+    //         }
 
-        }
-        catch (e) {
-            return next(e)
-        }
-    }
+    //     }
+    //     catch (e) {
+    //         return next(e)
+    //     }
+    // }
 
-    notificationMenu = async (req, res, next) => {
-        try {
-            const sessionId = req.cookies['B1SESSION'];
-            const sessionData = findSession(sessionId);
-            if (!sessionData) {
-                return res.status(401).send()
-            }
-            try {
-                let obj = {
-                    'StockTransfers': {
-                        name: `Перемещение запасов`,
-                        path: 'notificationStockTransfers'
-                    },
-                    'PurchaseOrders': {
-                        name: 'Поступление товаров',
-                        path: 'notificationPurchaseOrders'
-                    }
-                }
-                let notification = [...new Set(infoNotification().filter(item => item?.toEmpId == sessionData.empID || item?.qualityEmpId == sessionData.empID).map(item => item.api))].map(item => {
-                    return { title: obj[item]?.name, api: item, path: obj[item]?.path }
-                })
-                return res.status(200).json(notification)
-            }
-            catch (err) {
-                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
-            }
-
-        }
-        catch (e) {
-            return next(e)
-        }
-    }
-    messageMenu = async (req, res, next) => {
-        try {
-            const sessionId = req.cookies['B1SESSION'];
-            const sessionData = findSession(sessionId);
-            if (!sessionData) {
-                return res.status(401).send()
-            }
-            try {
-                let obj = {
-                    'StockTransfers': {
-                        name: `Перемещение запасов`,
-                        path: 'notificationStockTransfers',
-                        apiPath: 'notification'
-                    },
-                    'PurchaseOrders': {
-                        name: 'Поступление товаров',
-                        path: 'notificationPurchaseOrders',
-                        apiPath: 'message'
-
-                    }
-                }
-                let notification = [...new Set(infoMessage().filter(item => item?.fromEmpId == sessionData.empID).map(item => item.api))].map(item => {
-                    return { title: obj[item]?.name, api: item, path: obj[item]?.path, apiPath: obj[item]?.apiPath }
-                })
-                return res.status(200).json(notification)
-            }
-            catch (err) {
-                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
-            }
-
-        }
-        catch (e) {
-            return next(e)
-        }
-    }
-
-    async stockTransferRequest(body, token) {
-        try {
-            body.StockTransferLines = body.StockTransferLines.map(item => {
-                delete item.ItemName
-                return item
-            })
-            const axios = Axios.create({
-                baseURL: "https://su26-02.sb1.cloud",
-                timeout: 30000,
-                headers: {
-                    Cookie: `B1SESSION=${token}; ROUTEID=.node2`,
-                },
-                httpsAgent: new https.Agent({
-                    rejectUnauthorized: false,
-                }),
-            });
-            return axios
-                .post('/ServiceLayer/b1s/v2/StockTransfers', body)
-                .then(({ data }) => {
-                    return { status: true, data }
-                })
-                .catch(async (err) => {
-                    return { status: false, message: get(err, 'response.data', 'error') }
-                });
-        }
-        catch (e) {
-            return { status: false, message: e }
-        }
-    }
+    // async stockTransferRequest(body, token) {
+    //     try {
+    //         body.StockTransferLines = body.StockTransferLines.map(item => {
+    //             delete item.ItemName
+    //             return item
+    //         })
+    //         const axios = Axios.create({
+    //             baseURL: "https://su26-02.sb1.cloud",
+    //             timeout: 30000,
+    //             headers: {
+    //                 Cookie: `B1SESSION=${token}; ROUTEID=.node2`,
+    //             },
+    //             httpsAgent: new https.Agent({
+    //                 rejectUnauthorized: false,
+    //             }),
+    //         });
+    //         return axios
+    //             .post('/ServiceLayer/b1s/v2/StockTransfers', body)
+    //             .then(({ data }) => {
+    //                 return { status: true, data }
+    //             })
+    //             .catch(async (err) => {
+    //                 return { status: false, message: get(err, 'response.data', 'error') }
+    //             });
+    //     }
+    //     catch (e) {
+    //         return { status: false, message: e }
+    //     }
+    // }
 
     getBatch = async (token) => {
         try {
@@ -300,7 +232,7 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 1 
 
-GET /b1s/v1/PurchaseRequests/$count?$filter=DocumentsOwner eq ${sessionData?.empID}
+GET /b1s/v1/PurchaseOrders/$count?$filter=DocumentsOwner eq ${sessionData?.empID} and U_process eq 'no' and DocEntry gt ${sessionData.PurchaseOrders} and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
 
 --batch_36522ad7-fc75-4b56-8c71-56071383e77c 
 
@@ -308,7 +240,7 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 2 
 
-GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWarehouse eq '${sessionData?.wrh}'
+GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.empID} and DocEntry gt ${sessionData.PurchaseInvoices} and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
 
 --batch_36522ad7-fc75-4b56-8c71-56071383e77c--
             `
@@ -344,57 +276,47 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
             if (!sessionData) {
                 return res.status(401).send()
             }
-            let purchaseReqCount = 0
-            let strockTransferCount = 0
+            let purchaseOrd = 0
+            let purchaseInv = 0
 
             let info = await this.getBatch(sessionData.SessionId)
-            if (info?.status) {
+            if (info?.status && sessionData.jobTitle == "wrhmanager") {
                 let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
                 let match = info.data.match(regexPattern);
                 let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                purchaseReqCount = countList[0]
-                strockTransferCount = countList[1]
+                purchaseOrd = countList[0]
+                purchaseInv = countList[1]
             }
+
             try {
                 let obj = {
                     'wrhmanager': [
                         {
-                            id: 1,
-                            title: 'Заявка на закупку',
-                            count: purchaseReqCount,
-                            path: 'purchaseRequest'
+                            title: 'Закупки',
+                            newMessage: (+purchaseInv + +purchaseOrd) != 0,
+                            path: 'purchaseMenu'
                         },
                         {
-                            id: 2,
                             title: 'Перемещение запасов',
-                            count: +strockTransferCount + (infoNotification().filter(item => item?.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')?.length || 0),
-                            path: 'inventoryTransfer'
+                            newMessage: false,
+                            path: 'inventoryTransferMenu'
                         },
                         {
-                            id: 3,
-                            title: 'Поступление товаров',
-                            count: 0,
-                            path: 'buy'
-                        },
-                        {
-                            id: 4,
-                            title: 'На утверждении',
-                            count: infoNotification().filter(item => item?.toEmpId == sessionData?.empID)?.length || 0,
-                            path: 'notificationMenu'
-                        },
-                        {
-                            id: 5,
-                            title: "Сообщение",
-                            count: infoMessage().filter(item => item.fromEmpId == sessionData?.empID)?.length || 0,
-                            path: 'message'
+                            title: 'Продажа',
+                            newMessage: false,
                         }
                     ],
                     'qualitycontroller': [
                         {
-                            id: 4,
-                            title: 'На утверждении',
-                            count: infoNotification().filter(item => item?.qualityEmpId == sessionData?.empID)?.length || 0,
-                            path: 'notificationMenu'
+                            title: 'Производственные заказы',
+                            newMessage: false,
+                            path: ''
+                        },
+                        {
+                            title: 'Закупки',
+                            newMessage: infoPurchase().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
+                            path: 'purchaseMenu'
+
                         }
                     ]
                 }
@@ -409,23 +331,58 @@ GET /b1s/v1/StockTransfers/$count?$select=DocEntry,Series,Printed&$filter=FromWa
             return next(e)
         }
     }
-    message = async (req, res, next) => {
+
+    purchaseMenu = async (req, res, next) => {
         try {
             const sessionId = req.cookies['B1SESSION'];
             const sessionData = findSession(sessionId);
-            let { skip = 0, api } = req.query
             if (!sessionData) {
                 return res.status(401).send()
             }
 
+            let purchaseOrd = 0
+            let purchaseInv = 0
+            let info = await this.getBatch(sessionData.SessionId)
+            if (info?.status && sessionData.jobTitle == "wrhmanager") {
+                let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                let match = info.data.match(regexPattern);
+                let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                purchaseOrd = countList[0]
+                purchaseInv = countList[1]
+            }
             try {
-                let notification = infoMessage().filter(item => item.fromEmpId == sessionData.empID && item.api == api)
-                let actNotification = notification
-                notification = notification.slice(skip, +skip + 20)
-                let len = notification.length
-                let slLen = actNotification.slice(skip, +skip + 21).length
-                notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
-                return res.status(200).json(notification)
+                let obj = {
+                    'wrhmanager': [
+                        {
+                            title: 'Заказ на закупку',
+                            newMessage: +purchaseOrd != 0,
+                            path: 'purchaseOrder'
+                        },
+                        {
+                            title: 'В ожидании проверки',
+                            newMessage: false,
+                            path: 'pendingVerification'
+                        },
+                        {
+                            title: 'Завершенные закупки',
+                            newMessage: +purchaseInv != 0,
+                            path: "purchaseCompletion"
+                        }
+                    ],
+                    'qualitycontroller': [
+                        {
+                            title: 'В ожидании проверки',
+                            newMessage: infoPurchase().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
+                            path: 'pendingVerification'
+                        },
+                        {
+                            title: 'Проверенные',
+                            newMessage: false,
+                            path: "purchaseCompletion"
+                        }
+                    ]
+                }
+                return res.status(200).json(obj[sessionData.jobTitle])
             }
             catch (err) {
                 return res.status(err?.response?.status || 400).json(err?.response?.data || err)

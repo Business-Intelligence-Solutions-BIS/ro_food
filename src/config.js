@@ -5,14 +5,18 @@ const app = express()
 const httpServer = require('http').createServer(app)
 const io = require('socket.io')(httpServer)
 
-
 let socket;
 io.on('connection', (socketIo) => {
+    const rooms = io.sockets.adapter.rooms;
+    const roomList = Array.from(rooms.keys());
     socket = socketIo
-    socket.on('login', async ({ empId, wrh, job }) => {
-        updateRoom({ empId, socket: socket.id, wrh, job })
+    socketIo.on('login', async ({ empId, wrh, job, socketId }) => {
+        updateRoom({ empId, socket: socketId, wrh, job })
+        if (socketId && empId) {
+            io.to(socketId).emit('roomchange', { status: true })
+        }
     })
-    socket.on('notactive', async ({ empId }) => {
+    socketIo.on('notactive', async ({ empId }) => {
         deleteRoom(empId)
     })
 
