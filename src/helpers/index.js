@@ -55,12 +55,12 @@ function updateNotification(uid, data) {
     );
 }
 
-function updatePurchase(uid, data) {
-    let users = infoPurchase();
+function updateProduction(uid, data) {
+    let users = infoProduction();
     let index = users.findIndex((item) => item.uid == uid);
     users[index] = { ...users[index], ...data };
     fs.writeFileSync(
-        path.join(process.cwd(), "database", "purchase.json"),
+        path.join(process.cwd(), "database", "productionOrder.json"),
         JSON.stringify(users, null, 4)
     );
 }
@@ -98,6 +98,31 @@ function writePurchase(userData) {
     return userData
 }
 
+function infoProduction() {
+    let docs = fs.readFileSync(
+        path.join(process.cwd(), "database", "productionOrder.json"),
+        "UTF-8"
+    );
+    docs = docs ? JSON.parse(docs) : [];
+    return docs;
+}
+function writeProductionOrders(userData) {
+    let users = infoProduction();
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "productionOrder.json"),
+        JSON.stringify([...users, userData], null, 4)
+    );
+    return userData
+}
+function deleteProductionOrders(uid) {
+    let users = infoProduction();
+    users = users.filter(item => item.uid != uid)
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "productionOrder.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+
 function deletePurchase(uid) {
     let users = infoPurchase();
     users = users.filter(item => item.uid != uid)
@@ -106,6 +131,18 @@ function deletePurchase(uid) {
         JSON.stringify(users, null, 4)
     );
 }
+function updatePurchase(uid, data) {
+    let users = infoPurchase();
+    let index = users.findIndex((item) => item.uid == uid);
+    users[index] = { ...users[index], ...data };
+    fs.writeFileSync(
+        path.join(process.cwd(), "database", "purchase.json"),
+        JSON.stringify(users, null, 4)
+    );
+}
+
+
+
 function updatePurchaseTrue(arr = [], jobTitle) {
     if (arr.length) {
         let purchase = infoPurchase();
@@ -117,6 +154,21 @@ function updatePurchaseTrue(arr = [], jobTitle) {
         })
         fs.writeFileSync(
             path.join(process.cwd(), "database", "purchase.json"),
+            JSON.stringify(result, null, 4)
+        );
+    }
+}
+function updateProductionTrue(arr = [], jobTitle) {
+    if (arr.length) {
+        let purchase = infoProduction();
+        let result = purchase.map(item => {
+            if (jobTitle == 'prodmanager') {
+                return { ...item, empSeen: (arr.includes(item.uid) ? true : item.empSeen) }
+            }
+            return { ...item, qualitySeen: (arr.includes(item.uid) ? true : item.qualitySeen) }
+        })
+        fs.writeFileSync(
+            path.join(process.cwd(), "database", "productionOrder.json"),
             JSON.stringify(result, null, 4)
         );
     }
@@ -308,5 +360,10 @@ module.exports = {
     deletePurchase,
     updatePurchaseTrue,
     updateEmp,
-    updatePurchase
+    updatePurchase,
+    writeProductionOrders,
+    infoProduction,
+    deleteProductionOrders,
+    updateProductionTrue,
+    updateProduction
 }

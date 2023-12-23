@@ -1,7 +1,7 @@
 const { CREDENTIALS } = require("../credentials");
 const Axios = require("axios");
 const https = require("https");
-const { findSession, findUserPermissions, updateEmpWrh, infoNotification, infoMessage, infoPurchase } = require("../helpers");
+const { findSession, findUserPermissions, updateEmpWrh, infoNotification, infoMessage, infoPurchase, infoProduction } = require("../helpers");
 const { get, groupBy } = require("lodash");
 
 class CustomController {
@@ -269,6 +269,52 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
         }
     }
 
+    getProductionOrderBatch = async (token) => {
+        try {
+            const sessionData = findSession(token);
+            let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 1 
+
+GET /b1s/v1/ProductionOrders/$count?$filter=U_processPr eq 'open' and Warehouse eq '${sessionData.wrh}' and ProductionOrderStatus eq 'boposReleased' and U_dp_seen eq  'false' and CompletedQuantity lt PlannedQuantity
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c 
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 2 
+
+GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.empID} and DocEntry gt ${get(sessionData, 'PurchaseInvoices', 1)} and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--
+            `
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud",
+                timeout: 30000,
+                headers: {
+                    'Content-Type': "multipart/mixed;boundary=batch_36522ad7-fc75-4b56-8c71-56071383e77c",
+                    'Cookie': `B1SESSION=${token}; ROUTEID=.node2`,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .post('/ServiceLayer/b1s/v2/$batch', body)
+                .then(({ data }) => {
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, message: get(err, 'response.data', 'error') }
+                });
+        }
+        catch (e) {
+            return { status: false, message: e }
+        }
+    }
+
     menu = async (req, res, next) => {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -278,16 +324,28 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
             }
             let purchaseOrd = 0
             let purchaseInv = 0
-
-            let info = await this.getBatch(sessionData.SessionId)
-            if (info?.status && sessionData.jobTitle == "wrhmanager") {
-                let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
-                let match = info.data.match(regexPattern);
-                let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                purchaseOrd = countList[0]
-                purchaseInv = countList[1]
+            let info;
+            let productionOrderC = 0
+            if (sessionData.jobTitle == "wrhmanager") {
+                info = await this.getBatch(sessionData.SessionId)
+                if (info?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = info.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    purchaseOrd = countList[0]
+                    purchaseInv = countList[1]
+                }
             }
-
+            let infoPr;
+            if (sessionData.jobTitle == "prodmanager") {
+                infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
+                if (infoPr?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoPr.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    productionOrderC = countList[0]
+                }
+            }
             try {
                 let obj = {
                     'wrhmanager': [
@@ -309,13 +367,26 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     'qualitycontroller': [
                         {
                             title: 'Производственные заказы',
-                            newMessage: false,
-                            path: ''
+                            newMessage: infoProduction().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
+                            path: 'productionOrdersMenu'
                         },
                         {
                             title: 'Закупки',
                             newMessage: infoPurchase().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
                             path: 'purchaseMenu'
+
+                        }
+                    ],
+                    'prodmanager': [
+                        {
+                            title: 'Производственные заказы',
+                            newMessage: productionOrderC > 0,
+                            path: 'productionOrdersMenu'
+                        },
+                        {
+                            title: 'Перемещение запасов',
+                            newMessage: false,
+                            path: ''
 
                         }
                     ]
@@ -342,14 +413,33 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
 
             let purchaseOrd = 0
             let purchaseInv = 0
-            let info = await this.getBatch(sessionData.SessionId)
-            if (info?.status && sessionData.jobTitle == "wrhmanager") {
-                let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
-                let match = info.data.match(regexPattern);
-                let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                purchaseOrd = countList[0]
-                purchaseInv = countList[1]
+
+            let productionOrderC = 0
+
+            let info;
+            if (sessionData.jobTitle == "wrhmanager") {
+                info = await this.getBatch(sessionData.SessionId)
+                if (info?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = info.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    purchaseOrd = countList[0]
+                    purchaseInv = countList[1]
+                }
             }
+
+            let infoPr;
+            if (sessionData.jobTitle == "prodmanager") {
+                infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
+                if (infoPr?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoPr.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    productionOrderC = countList[0]
+                }
+            }
+
+
             try {
                 let obj = {
                     'wrhmanager': [
@@ -361,26 +451,26 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         {
                             title: 'В ожидании проверки',
                             newMessage: false,
-                            path: 'pendingVerification'
+                            path: ''
                         },
                         {
                             title: 'Завершенные закупки',
                             newMessage: +purchaseInv != 0,
-                            path: "purchaseCompletion"
+                            path: ""
                         }
                     ],
                     'qualitycontroller': [
                         {
                             title: 'В ожидании проверки',
                             newMessage: infoPurchase().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
-                            path: 'pendingVerification'
+                            path: ''
                         },
                         {
                             title: 'Проверенные',
                             newMessage: false,
-                            path: "purchaseCompletion"
+                            path: ""
                         }
-                    ]
+                    ],
                 }
                 return res.status(200).json(obj[sessionData.jobTitle])
             }
@@ -394,6 +484,73 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
         }
     }
 
+    productionMenu = async (req, res, next) => {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+
+
+            let productionOrderC = 0
+
+            let infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
+            if (infoPr?.status && sessionData.jobTitle == "prodmanager") {
+                let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                let match = infoPr.data.match(regexPattern);
+                let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                productionOrderC = countList[0]
+            }
+
+            try {
+                let obj = {
+                    'qualitycontroller': [
+                        {
+                            title: 'В ожидании проверки',
+                            newMessage: infoProduction().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
+                            path: 'pendingVerification'
+                        },
+                        {
+                            title: 'Проверенные',
+                            newMessage: false,
+                            path: "purchaseCompletion"
+                        }
+                    ],
+                    'prodmanager': [
+                        {
+                            title: 'Открытые',
+                            newMessage: productionOrderC > 0,
+                            path: 'bossOpen1'
+                        },
+                        {
+                            title: 'В процессе',
+                            newMessage: false,
+                            path: "bossInProgress2"
+                        },
+                        {
+                            title: 'В ожидании проверки',
+                            newMessage: false,
+                            path: "bossPendingVerification3"
+                        },
+                        {
+                            title: 'Завершенные',
+                            newMessage: false,
+                            path: "bossCompleted4"
+                        },
+                    ]
+                }
+                return res.status(200).json(obj[sessionData.jobTitle])
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
 
 }
 

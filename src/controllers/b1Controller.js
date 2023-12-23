@@ -4,7 +4,7 @@ const https = require("https");
 const { get, rest } = require("lodash");
 const { io, socket } = require("../config");
 const { CREDENTIALS } = require("../credentials");
-const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification, writeMessage, updateNotification, deleteNotification, writePurchase, infoPurchase, updatePurchase, updatePurchaseTrue, updateEmp, deletePurchase } = require("../helpers");
+const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification, writeMessage, updateNotification, deleteNotification, writePurchase, infoPurchase, updatePurchase, updatePurchaseTrue, updateEmp, deletePurchase, infoProduction, updateProductionTrue, deleteProductionOrders, updateProduction } = require("../helpers");
 const CustomController = require("./customController");
 const Controller = require("./customController");
 const ShortUniqueId = require('short-unique-id');
@@ -277,6 +277,33 @@ class b1Controller {
             return next(e)
         }
     }
+    async ProductionOrders(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let qualityControllerRoomId = infoRoom().find(item => item?.job == 'qualitycontroller')
+                let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
+                let uid = randomUUID()
+                if (qualityControllerRoomId && qualityEmpId) {
+                    io.to(qualityControllerRoomId.socket).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0 })
+                }
+                if (qualityEmpId) {
+                    return res.status(201).send(productionOrder({ qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0 }))
+                }
+                else if (!qualityEmpId) {
+                    return res.status(404).send({ status: false, message: 'Quality Controller not found' })
+                }
+
+            }
+            else {
+                return res.status(401).send()
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
     async PurchaseOrdersStatus(req, res, next) {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -307,6 +334,57 @@ class b1Controller {
                             if (roomId) {
                                 io.to(roomId.socket).emit('notconfirmedPurchase', { ...infoNotNew, path: "message", title: 'Поступление товаров' })
                             }
+                            deletePurchase(infoNotNew.uid)
+                        }
+                        return res.status(200).send()
+                    }
+                    else {
+                        return res.status(403).send({ message: 'Tasdiqlay olmaysiz' })
+                    }
+                }
+                else {
+                    return res.status(404).send({ status: false, message: 'uid Topilmadi' })
+                }
+            }
+            else {
+                return res.status(401).send()
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    async ProductionOrdersStatus(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let { status, job, uid, DocumentLines } = req.body
+                let infoNot = infoProduction().find(item => item.uid == uid)
+                if (infoNot) {
+                    if (infoNot[job] == 0) {
+                        if (status) {
+                            updateProduction(uid, Object.fromEntries([[job, 2]]))
+                            updateProduction(uid, { body: { ...infoNot.body, DocumentLines } })
+                            let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
+                            let infoNotNew = infoProduction().find(item => item.uid == uid)
+                            if (roomId) {
+                                io.to(roomId.socket).emit('confirmedProduction', { ...infoNotNew, path: "message", title: 'Поступление товаров' })
+                            }
+                            if (infoNotNew.qualitycontroller == 2) {
+                                deleteProductionOrders(infoNotNew.uid)
+                            }
+                        }
+                        else {
+                            updateProduction(uid, Object.fromEntries([[job, 1]]))
+                            updateProduction(uid, { body: { ...infoNot.body, DocumentLines } })
+
+                            let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
+                            let infoNotNew = infoProduction().find(item => item.uid == uid)
+                            if (roomId) {
+                                io.to(roomId.socket).emit('notConfirmedProduction', { ...infoNotNew, path: "message", title: 'Поступление товаров' })
+                            }
+                            deleteProductionOrders(infoNotNew.uid)
                         }
                         return res.status(200).send()
                     }
@@ -346,6 +424,41 @@ class b1Controller {
                 if (notification.length) {
                     let list = sessionData.jobTitle == "wrhmanager" ? notification.filter(item => item.empSeen == false).map(item => item.uid) : notification.filter(item => item.qualitySeen == false).map(item => item.uid)
                     updatePurchaseTrue(list, sessionData.jobTitle)
+                    let len = notification.length
+                    let slLen = actNotification.slice(skip, +skip + 21).length
+                    notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
+                }
+                return res.status(200).json(notification);
+            }
+            else {
+                return res.status(401).send()
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+    async ProductionOrdersGet(req, res, next) {
+        try {
+            delete req.headers.host
+            delete req.headers['content-length']
+            const sessionId = req.cookies['B1SESSION'];
+            let { skip = 0 } = req.query
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let notification;
+                if (sessionData.jobTitle == "prodmanager") {
+                    notification = infoProduction().filter(item => item?.fromEmpId == sessionData?.empID).sort((a, b) => a.empSeen - b.empSeen)
+                }
+                else {
+                    notification = infoProduction().filter(item => item?.qualityEmpId == sessionData?.empID).sort((a, b) => a.qualitySeen - b.qualitySeen)
+                }
+                let actNotification = notification
+                notification = notification.slice(skip, +skip + 20)
+                if (notification.length) {
+                    let list = sessionData.jobTitle == "prodmanager" ? notification.filter(item => item.empSeen == false).map(item => item.uid) : notification.filter(item => item.qualitySeen == false).map(item => item.uid)
+                    updateProductionTrue(list, sessionData.jobTitle)
                     let len = notification.length
                     let slLen = actNotification.slice(skip, +skip + 21).length
                     notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
