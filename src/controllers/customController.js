@@ -509,12 +509,12 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         {
                             title: 'В ожидании проверки',
                             newMessage: infoProduction().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
-                            path: 'pendingVerification'
+                            path: 'bossPendingVerification3'
                         },
                         {
                             title: 'Проверенные',
                             newMessage: false,
-                            path: "purchaseCompletion"
+                            path: "bossCompleted4"
                         }
                     ],
                     'prodmanager': [

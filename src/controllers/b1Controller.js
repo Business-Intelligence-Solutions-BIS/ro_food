@@ -4,7 +4,7 @@ const https = require("https");
 const { get, rest } = require("lodash");
 const { io, socket } = require("../config");
 const { CREDENTIALS } = require("../credentials");
-const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification, writeMessage, updateNotification, deleteNotification, writePurchase, infoPurchase, updatePurchase, updatePurchaseTrue, updateEmp, deletePurchase, infoProduction, updateProductionTrue, deleteProductionOrders, updateProduction } = require("../helpers");
+const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification, writeMessage, updateNotification, deleteNotification, writePurchase, infoPurchase, updatePurchase, updatePurchaseTrue, updateEmp, deletePurchase, infoProduction, updateProductionTrue, deleteProductionOrders, updateProduction, writeProductionOrders } = require("../helpers");
 const CustomController = require("./customController");
 const Controller = require("./customController");
 const ShortUniqueId = require('short-unique-id');
@@ -289,7 +289,7 @@ class b1Controller {
                     io.to(qualityControllerRoomId.socket).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0 })
                 }
                 if (qualityEmpId) {
-                    return res.status(201).send(productionOrder({ qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0 }))
+                    return res.status(201).send(writeProductionOrders({ qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0 }))
                 }
                 else if (!qualityEmpId) {
                     return res.status(404).send({ status: false, message: 'Quality Controller not found' })
@@ -359,13 +359,13 @@ class b1Controller {
             const sessionId = req.cookies['B1SESSION'];
             const sessionData = findSession(sessionId);
             if (sessionData) {
-                let { status, job, uid, DocumentLines } = req.body
+                let { status, job, uid } = req.body
                 let infoNot = infoProduction().find(item => item.uid == uid)
                 if (infoNot) {
                     if (infoNot[job] == 0) {
                         if (status) {
                             updateProduction(uid, Object.fromEntries([[job, 2]]))
-                            updateProduction(uid, { body: { ...infoNot.body, DocumentLines } })
+                            updateProduction(uid, { body: { ...infoNot.body } })
                             let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
                             let infoNotNew = infoProduction().find(item => item.uid == uid)
                             if (roomId) {
@@ -377,7 +377,7 @@ class b1Controller {
                         }
                         else {
                             updateProduction(uid, Object.fromEntries([[job, 1]]))
-                            updateProduction(uid, { body: { ...infoNot.body, DocumentLines } })
+                            updateProduction(uid, { body: { ...infoNot.body } })
 
                             let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
                             let infoNotNew = infoProduction().find(item => item.uid == uid)
@@ -454,6 +454,7 @@ class b1Controller {
                 else {
                     notification = infoProduction().filter(item => item?.qualityEmpId == sessionData?.empID).sort((a, b) => a.qualitySeen - b.qualitySeen)
                 }
+
                 let actNotification = notification
                 notification = notification.slice(skip, +skip + 20)
                 if (notification.length) {
