@@ -6,8 +6,14 @@
         "job": "wrhmanager"
     },
     {
+        "empId": 6,
+        "socket": "BNlhPKN2lR9VXzodAACK",
+        "wrh": "S5",
+        "job": "qualitycontroller"
+    },
+    {
         "empId": 12,
-        "socket": "pLPNsz5WdiPwgICkAAAx",
+        "socket": "wpiPNl83ChfQ-_MlAAB_",
         "wrh": "S1",
         "job": "prodmanager"
     }

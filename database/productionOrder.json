@@ -1,1 +1,37 @@
-[]
+[
+    {
+        "qualitySeen": false,
+        "empSeen": false,
+        "createDate": "2023-12-27T11:27:02.286Z",
+        "body": {
+            "Releaser": 12,
+            "ProductDescription": "Ruchka sharikovaya",
+            "CreationDate": "2023-12-27T00:00:00Z",
+            "ItemNo": "ot_ruchka",
+            "Warehouse": "S1",
+            "DocumentNumber": 47,
+            "DocumentLines": [
+                {
+                    "Quantity": "12",
+                    "BaseType": 202,
+                    "BaseEntry": 95,
+                    "WarehouseCode": "S1",
+                    "BaseLine": null,
+                    "ItemName": "Ruchka sharikovaya"
+                },
+                {
+                    "Quantity": "12",
+                    "BaseType": 202,
+                    "BaseEntry": 95,
+                    "WarehouseCode": "S1",
+                    "BaseLine": 4,
+                    "ItemName": "Brak ot ruchki"
+                }
+            ]
+        },
+        "uid": "pZhMOAOBrK",
+        "fromEmpId": 12,
+        "qualityEmpId": 6,
+        "qualitycontroller": 0
+    }
+]

@@ -20,6 +20,7 @@ io.on('connection', (socketIo) => {
         deleteRoom(empId)
     })
 
+
     // socket.on('confirmStockTransfer', async ({ job, uid }) => {
     //     let infoNot = infoNotification().find(item => item.uid == uid)
     //     if (infoNot) {

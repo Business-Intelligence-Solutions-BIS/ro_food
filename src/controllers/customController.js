@@ -451,24 +451,24 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         {
                             title: 'В ожидании проверки',
                             newMessage: false,
-                            path: ''
+                            path: 'pendingVerification'
                         },
                         {
                             title: 'Завершенные закупки',
                             newMessage: +purchaseInv != 0,
-                            path: ""
+                            path: "purchaseCompletion"
                         }
                     ],
                     'qualitycontroller': [
                         {
                             title: 'В ожидании проверки',
                             newMessage: infoPurchase().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
-                            path: ''
+                            path: 'pendingVerification'
                         },
                         {
                             title: 'Проверенные',
                             newMessage: false,
-                            path: ""
+                            path: "purchaseCompletion"
                         }
                     ],
                 }
