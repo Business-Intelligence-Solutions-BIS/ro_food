@@ -2,7 +2,7 @@
 const Axios = require("axios");
 const https = require("https");
 const { get } = require("lodash");
-const { io, socket } = require("../config");
+const { io, socket, socketIo } = require("../config");
 const { CREDENTIALS } = require("../credentials");
 const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification, writeMessage, updateNotification, deleteNotification, writePurchase, infoPurchase, updatePurchase, updatePurchaseTrue, updateEmp, deletePurchase, infoProduction, updateProductionTrue, deleteProductionOrders, updateProduction, writeProductionOrders } = require("../helpers");
 const CustomController = require("./customController");
@@ -258,7 +258,7 @@ class b1Controller {
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
                 let uid = randomUUID()
                 if (qualityEmpId) {
-                    socket.broadcast.emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
+                    io.to(infoRoom().map(item => item.socket)).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
                 }
                 if (qualityEmpId) {
                     return res.status(201).send(writePurchase({ qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0 }))
@@ -284,7 +284,7 @@ class b1Controller {
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
                 let uid = randomUUID()
                 if (qualityEmpId) {
-                    let data = io.emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
+                    let data = io.to(infoRoom().map(item => item.socket)).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
                     console.log(data, ' bu data')
                 }
                 if (qualityEmpId) {
@@ -317,7 +317,7 @@ class b1Controller {
                             updatePurchase(uid, { body: { ...infoNot.body, DocumentLines } })
                             let infoNotNew = infoPurchase().find(item => item.uid == uid)
                             if (roomId) {
-                                socket.broadcast.emit('confirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                                io.to(infoRoom().map(item => item.socket)).emit('confirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             if (infoNotNew.qualitycontroller == 2) {
                                 deletePurchase(infoNotNew.uid)
@@ -328,7 +328,7 @@ class b1Controller {
                             updatePurchase(uid, { body: { ...infoNot.body, DocumentLines } })
                             let infoNotNew = infoPurchase().find(item => item.uid == uid)
                             if (roomId) {
-                                socket.broadcast.emit('notconfirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                                io.to(infoRoom().map(item => item.socket)).emit('notconfirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             deletePurchase(infoNotNew.uid)
                         }
@@ -364,7 +364,7 @@ class b1Controller {
                             updateProduction(uid, { body: { ...infoNot.body } })
                             let infoNotNew = infoProduction().find(item => item.uid == uid)
                             if (roomId) {
-                                socket.broadcast.emit('confirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                                io.to(infoRoom().map(item => item.socket)).emit('confirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             if (infoNotNew.qualitycontroller == 2) {
                                 deleteProductionOrders(infoNotNew.uid)
@@ -375,7 +375,7 @@ class b1Controller {
                             updateProduction(uid, { body: { ...infoNot.body } })
                             let infoNotNew = infoProduction().find(item => item.uid == uid)
                             if (roomId) {
-                                socket.broadcast.emit('notConfirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                                io.to(infoRoom().map(item => item.socket)).emit('notConfirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             deleteProductionOrders(infoNotNew.uid)
                         }

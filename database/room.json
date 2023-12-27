@@ -1,11 +1,5 @@
 [
     {
-        "empId": 3,
-        "socket": {},
-        "wrh": "A1",
-        "job": "wrhmanager"
-    },
-    {
         "empId": 6,
         "socket": "BNlhPKN2lR9VXzodAACK",
         "wrh": "S5",
@@ -13,7 +7,7 @@
     },
     {
         "empId": 12,
-        "socket": "wpiPNl83ChfQ-_MlAAB_",
+        "socket": "Ylnx9OCNFkULrBJhAABB",
         "wrh": "S1",
         "job": "prodmanager"
     }
