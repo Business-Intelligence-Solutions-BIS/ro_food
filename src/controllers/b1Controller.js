@@ -258,7 +258,8 @@ class b1Controller {
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
                 let uid = randomUUID()
                 if (qualityEmpId) {
-                    io.to(infoRoom().map(item => item.socket)).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
+                    let roomId = infoRoom().map(item => item.empId == infoNot.fromEmpId).socket
+                    io.to(roomId).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
                 }
                 if (qualityEmpId) {
                     return res.status(201).send(writePurchase({ qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0 }))
@@ -284,7 +285,9 @@ class b1Controller {
                 let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
                 let uid = randomUUID()
                 if (qualityEmpId) {
-                    let data = io.to(infoRoom().map(item => item.socket)).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
+                    let roomId = infoRoom().map(item => item.empId == infoNot.fromEmpId).socket
+
+                    let data = io.to(roomId).emit('notification', { qualitySeen: false, empSeen: false, createDate: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), qualityEmpId, qualitycontroller: 0, empId: qualityEmpId })
                     console.log(data, ' bu data')
                 }
                 if (qualityEmpId) {
@@ -314,21 +317,25 @@ class b1Controller {
                     if (infoNot[job] == 0) {
                         if (status) {
                             updatePurchase(uid, Object.fromEntries([[job, 2]]))
+                            let roomId = infoRoom().map(item => item.empId == infoNot.fromEmpId).socket
+
                             updatePurchase(uid, { body: { ...infoNot.body, DocumentLines } })
                             let infoNotNew = infoPurchase().find(item => item.uid == uid)
                             if (roomId) {
-                                io.to(infoRoom().map(item => item.socket)).emit('confirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                                io.to(roomId).emit('confirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             if (infoNotNew.qualitycontroller == 2) {
                                 deletePurchase(infoNotNew.uid)
                             }
                         }
                         else {
+                            let roomId = infoRoom().map(item => item.empId == infoNot.fromEmpId).socket
+
                             updatePurchase(uid, Object.fromEntries([[job, 1]]))
                             updatePurchase(uid, { body: { ...infoNot.body, DocumentLines } })
                             let infoNotNew = infoPurchase().find(item => item.uid == uid)
                             if (roomId) {
-                                io.to(infoRoom().map(item => item.socket)).emit('notconfirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                                io.to(roomId).emit('notconfirmedPurchase', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             deletePurchase(infoNotNew.uid)
                         }
@@ -360,22 +367,26 @@ class b1Controller {
                 if (infoNot) {
                     if (infoNot[job] == 0) {
                         if (status) {
+                            let roomId = infoRoom().map(item => item.empId == infoNot.fromEmpId).socket
+
                             updateProduction(uid, Object.fromEntries([[job, 2]]))
                             updateProduction(uid, { body: { ...infoNot.body } })
                             let infoNotNew = infoProduction().find(item => item.uid == uid)
                             if (roomId) {
-                                io.to(infoRoom().map(item => item.socket)).emit('confirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                                io.to(roomId).emit('confirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             if (infoNotNew.qualitycontroller == 2) {
                                 deleteProductionOrders(infoNotNew.uid)
                             }
                         }
                         else {
+                            let room = infoRoom().map(item => item.empId == infoNot.fromEmpId).socket
                             updateProduction(uid, Object.fromEntries([[job, 1]]))
                             updateProduction(uid, { body: { ...infoNot.body } })
                             let infoNotNew = infoProduction().find(item => item.uid == uid)
-                            if (roomId) {
-                                io.to(infoRoom().map(item => item.socket)).emit('notConfirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
+                            if (room) {
+
+                                io.to(room).emit('notConfirmedProduction', { ...infoNotNew, empId: infoNot.fromEmpId, path: "message", title: 'Поступление товаров' })
                             }
                             deleteProductionOrders(infoNotNew.uid)
                         }
@@ -421,6 +432,7 @@ class b1Controller {
                     let slLen = actNotification.slice(skip, +skip + 21).length
                     notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
                 }
+
                 return res.status(200).json(notification);
             }
             else {

@@ -8,12 +8,10 @@ const io = require('socket.io')(httpServer)
 let socket;
 io.on('connection', (socketIo) => {
     const rooms = io.sockets.adapter.rooms;
+    const roomList = Array.from(rooms.keys());
     socket = socketIo
-    socketIo.on('login', async ({ empId, wrh, job, socketId }) => {
-        updateRoom({ empId, socket: socketId, wrh, job })
-        if (socketId && empId) {
-            io.to(socketId).emit('roomchange', { status: true })
-        }
+    socketIo.on('login', async ({ empId, wrh, job }) => {
+        updateRoom({ empId, socket: socketIo.id, wrh, job })
     })
     socketIo.on('notactive', async ({ empId }) => {
         deleteRoom(empId)

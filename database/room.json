@@ -6,8 +6,20 @@
         "job": "qualitycontroller"
     },
     {
+        "empId": 8,
+        "socket": "z82cLTBmgHzSswIwAAAL",
+        "wrh": "D1",
+        "job": "wrhmanager"
+    },
+    {
+        "empId": 9,
+        "socket": "HjrrslZp3YTF2P-OAAAN",
+        "wrh": "D2",
+        "job": "wrhmanager"
+    },
+    {
         "empId": 12,
-        "socket": "Ylnx9OCNFkULrBJhAABB",
+        "socket": "Y3QhyHd6OTmOW-vnAAAN",
         "wrh": "S1",
         "job": "prodmanager"
     }
