@@ -232,7 +232,7 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 1 
 
-GET /b1s/v1/PurchaseOrders/$count?$filter=DocumentsOwner eq ${sessionData?.empID} and U_process eq 'no' and DocEntry gt ${sessionData.PurchaseOrders} and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+GET /b1s/v1/PurchaseOrders/$count?$filter=DocumentsOwner eq ${sessionData.empID} and U_typeorder eq  'Местный' and U_zav_seen eq 'false' and U_status_zakupka eq  'new_zakupka' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
 
 --batch_36522ad7-fc75-4b56-8c71-56071383e77c 
 
@@ -240,10 +240,71 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 2 
 
-GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.empID} and DocEntry gt ${sessionData.PurchaseInvoices} and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+GET /b1s/v1/PurchaseOrders/$count?$filter=DocumentsOwner eq ${sessionData.empID} and U_typeorder eq  'Местный' and U_zav_seen eq 'false' and U_status_zakupka eq  'ready_for_otk1' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
 
 --batch_36522ad7-fc75-4b56-8c71-56071383e77c--
-            `
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 3
+
+GET /b1s/v1/PurchaseOrders/$count?$filter=DocumentsOwner eq ${sessionData.empID} and U_typeorder eq  'Местный' and U_zav_seen eq 'false' and U_status_zakupka eq  'checked_otk1' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 4
+
+GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData.empID} and U_zav_seen eq 'false' and U_typeorder eq  'Местный' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--`
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud",
+                timeout: 30000,
+                headers: {
+                    'Content-Type': "multipart/mixed;boundary=batch_36522ad7-fc75-4b56-8c71-56071383e77c",
+                    'Cookie': `B1SESSION=${token}; ROUTEID=.node2`,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .post('/ServiceLayer/b1s/v2/$batch', body)
+                .then(({ data }) => {
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, message: get(err, 'response.data', 'error') }
+                });
+        }
+        catch (e) {
+            return { status: false, message: e }
+        }
+    }
+
+    getBatchQuality = async (token) => {
+        try {
+            const sessionData = findSession(token);
+            let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 1 
+
+GET /b1s/v1/PurchaseOrders/$count?$filter=U_otk_seen eq 'false' and U_typeorder eq  'Местный' and U_status_zakupka eq  'ready_for_otk1' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c 
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 2 
+
+GET /b1s/v1/PurchaseOrders/$count?$filter=U_otk_seen eq 'false' and U_typeorder eq  'Местный' and U_status_zakupka eq  'ready_for_otk2' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--`
+
             const axios = Axios.create({
                 baseURL: "https://su26-02.sb1.cloud",
                 timeout: 30000,
@@ -322,23 +383,29 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
             if (!sessionData) {
                 return res.status(401).send()
             }
-            let purchaseOrd = 0
-            let purchaseInv = 0
-            let info;
+            let newS = 0
+            let read_otk = 0
+            let checked_otk = 0
+            let falseS = 0
+
+
+
             let productionOrderC = 0
             if (sessionData.jobTitle == "wrhmanager") {
-                info = await this.getBatch(sessionData.SessionId)
+                let info = await this.getBatch(sessionData.SessionId)
                 if (info?.status) {
                     let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
                     let match = info.data.match(regexPattern);
                     let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                    purchaseOrd = countList[0]
-                    purchaseInv = countList[1]
+                    newS = countList[0]
+                    read_otk = countList[1]
+                    checked_otk = countList[2]
+                    falseS = countList[3]
                 }
             }
-            let infoPr;
+
             if (sessionData.jobTitle == "prodmanager") {
-                infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
+                let infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
                 if (infoPr?.status) {
                     let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
                     let match = infoPr.data.match(regexPattern);
@@ -346,12 +413,26 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     productionOrderC = countList[0]
                 }
             }
+
+            let qualityReady1P = 0
+            let qualityReady2P = 0
+
+            if (sessionData.jobTitle == "qualitycontroller") {
+                let info = await this.getBatchQuality(sessionData.SessionId)
+                if (info?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = info.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    qualityReady1P = countList[0]
+                    qualityReady2P = countList[1]
+                }
+            }
             try {
                 let obj = {
                     'wrhmanager': [
                         {
                             title: 'Закупки',
-                            newMessage: (+purchaseInv + +purchaseOrd) != 0,
+                            newMessage: (newS + read_otk + checked_otk + falseS) != 0,
                             path: 'purchaseMenu'
                         },
                         {
@@ -372,7 +453,7 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         },
                         {
                             title: 'Закупки',
-                            newMessage: infoPurchase().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
+                            newMessage: (+qualityReady1P + +qualityReady2P) != 0,
                             path: 'purchaseMenu'
 
                         }
@@ -396,7 +477,6 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
             catch (err) {
                 return res.status(err?.response?.status || 400).json(err?.response?.data || err)
             }
-
         }
         catch (e) {
             return next(e)
@@ -410,21 +490,23 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
             if (!sessionData) {
                 return res.status(401).send()
             }
+            let newS = 0
+            let read_otk = 0
+            let checked_otk = 0
+            let falseS = 0
 
-            let purchaseOrd = 0
-            let purchaseInv = 0
 
-            let productionOrderC = 0
 
-            let info;
             if (sessionData.jobTitle == "wrhmanager") {
-                info = await this.getBatch(sessionData.SessionId)
+                let info = await this.getBatch(sessionData.SessionId)
                 if (info?.status) {
                     let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
                     let match = info.data.match(regexPattern);
                     let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                    purchaseOrd = countList[0]
-                    purchaseInv = countList[1]
+                    newS = countList[0]
+                    read_otk = countList[1]
+                    checked_otk = countList[2]
+                    falseS = countList[3]
                 }
             }
 
@@ -439,37 +521,69 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                 }
             }
 
+            let qualityReady1P = 0
+            let qualityReady2P = 0
+            if (sessionData.jobTitle == "qualitycontroller") {
+                let info = await this.getBatchQuality(sessionData.SessionId)
+                if (info?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = info.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    qualityReady1P = countList[0]
+                    qualityReady2P = countList[1]
+                }
+            }
 
             try {
                 let obj = {
                     'wrhmanager': [
                         {
                             title: 'Заказ на закупку',
-                            newMessage: +purchaseOrd != 0,
+                            newMessage: +newS != 0,
                             path: 'purchaseOrder'
                         },
                         {
-                            title: 'В ожидании проверки',
+                            title: 'В ожидании проверки OTK N1',
+                            newMessage: +read_otk != 0,
+                            path: 'pendingVerification'
+                        },
+                        {
+                            title: 'Проверенные',
+                            newMessage: +checked_otk != 0,
+                            path: ''
+                        },
+                        {
+                            title: 'В ожидании проверки OTK N1',
                             newMessage: false,
                             path: 'pendingVerification'
                         },
                         {
                             title: 'Завершенные закупки',
-                            newMessage: +purchaseInv != 0,
+                            newMessage: +falseS != 0,
                             path: "purchaseCompletion"
                         }
                     ],
                     'qualitycontroller': [
                         {
-                            title: 'В ожидании проверки',
-                            newMessage: infoPurchase().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
+                            title: 'В ожидании проверки OTK N1',
+                            newMessage: +qualityReady1P != 0,
                             path: 'pendingVerification'
                         },
                         {
-                            title: 'Проверенные',
+                            title: 'Проверенные OTK N1',
                             newMessage: false,
                             path: "purchaseCompletion"
-                        }
+                        },
+                        {
+                            title: 'В ожидании проверки OTK N2',
+                            newMessage: +qualityReady2P != 0,
+                            path: 'pendingVerification'
+                        },
+                        {
+                            title: 'Проверенные OTK N2',
+                            newMessage: false,
+                            path: "purchaseCompletion"
+                        },
                     ],
                 }
                 return res.status(200).json(obj[sessionData.jobTitle])
