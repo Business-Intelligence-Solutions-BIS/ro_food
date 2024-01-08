@@ -550,12 +550,12 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         {
                             title: 'Проверенные',
                             newMessage: +checked_otk != 0,
-                            path: ''
+                            path: 'verified'
                         },
                         {
                             title: 'В ожидании проверки OTK N1',
                             newMessage: false,
-                            path: 'pendingVerification'
+                            path: 'pendingVerification2'
                         },
                         {
                             title: 'Завершенные закупки',
@@ -567,22 +567,22 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         {
                             title: 'В ожидании проверки OTK N1',
                             newMessage: +qualityReady1P != 0,
-                            path: 'pendingVerification'
+                            path: 'verifiedOTK'
                         },
                         {
                             title: 'Проверенные OTK N1',
                             newMessage: false,
-                            path: "purchaseCompletion"
+                            path: "menu2OTK"
                         },
                         {
                             title: 'В ожидании проверки OTK N2',
                             newMessage: +qualityReady2P != 0,
-                            path: 'pendingVerification'
+                            path: 'menu3OTK'
                         },
                         {
                             title: 'Проверенные OTK N2',
                             newMessage: false,
-                            path: "purchaseCompletion"
+                            path: "menu4OTK"
                         },
                     ],
                 }
