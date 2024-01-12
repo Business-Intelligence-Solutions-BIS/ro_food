@@ -17,6 +17,9 @@ router.get('/api/productionMenu', customController.productionMenu)
 
 router.post('/api/login', b1Controller.login)
 router.post('/api/PurchaseOrders', b1Controller.PurchaseOrders)
+
+router.post('/api/ItemStock', b1Controller.ItemStock)
+
 router.get('/api/PurchaseOrdersGet', b1Controller.PurchaseOrdersGet)
 router.post('/api/PurchaseOrdersStatus', b1Controller.PurchaseOrdersStatus)
 

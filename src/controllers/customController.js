@@ -284,6 +284,103 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData.empI
         }
     }
 
+    getBatchInventory = async (token) => {
+        try {
+            const sessionData = findSession(token);
+            let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 1 
+
+GET /b1s/v1/InventoryTransferRequests/$count?$filter=DocumentStatus eq 'bost_Open' and U_zapros_zav_a_seen eq 'false' and FromWarehouse eq '${sessionData.wrh}' and U_zapros_status eq 'zapros_new'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c 
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 2
+
+GET /b1s/v1/InventoryTransferRequests/$count?$filter=DocumentStatus eq 'bost_Open' and U_zapros_zav_a_seen eq 'false' and ToWarehouse eq '${sessionData.wrh}' and U_zapros_status eq 'zapros_send'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 3
+
+GET /b1s/v1/InventoryTransferRequests/$count?$filter=DocumentStatus eq 'bost_Open' and (FromWarehouse eq '${sessionData.wrh}') and (U_zapros_zav_a_seen eq 'false' or U_zapros_zav_b_seen eq 'false') and U_zapros_status eq 'zapros_otk_process'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 4
+
+GET /b1s/v1/StockTransfers/$count?$filter=DocumentStatus eq 'bost_Open' and (U_zapros_zav_a_seen eq 'false' or U_zapros_zav_b_seen eq 'false') and (FromWarehouse eq '${sessionData.wrh}' or ToWarehouse eq '${sessionData.wrh}')&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--`
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud",
+                timeout: 30000,
+                headers: {
+                    'Content-Type': "multipart/mixed;boundary=batch_36522ad7-fc75-4b56-8c71-56071383e77c",
+                    'Cookie': `B1SESSION=${token}; ROUTEID=.node2`,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .post('/ServiceLayer/b1s/v2/$batch', body)
+                .then(({ data }) => {
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, message: get(err, 'response.data', 'error') }
+                });
+        }
+        catch (e) {
+            return { status: false, message: e }
+        }
+    }
+    getBatchInventoryQuality = async (token) => {
+        try {
+            const sessionData = findSession(token);
+            let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 1 
+
+GET /b1s/v1/InventoryTransferRequests/$count?$filter=DocumentStatus eq 'bost_Open' and U_zapros_status eq 'zapros_otk_process'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c`
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud",
+                timeout: 30000,
+                headers: {
+                    'Content-Type': "multipart/mixed;boundary=batch_36522ad7-fc75-4b56-8c71-56071383e77c",
+                    'Cookie': `B1SESSION=${token}; ROUTEID=.node2`,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .post('/ServiceLayer/b1s/v2/$batch', body)
+                .then(({ data }) => {
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, message: get(err, 'response.data', 'error') }
+                });
+        }
+        catch (e) {
+            return { status: false, message: e }
+        }
+    }
+
     getBatchQuality = async (token) => {
         try {
             const sessionData = findSession(token);
@@ -388,6 +485,10 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
             let checked_otk = 0
             let falseS = 0
 
+            let inventory1 = 0
+            let inventory2 = 0
+            let inventory3 = 0
+            let inventory4 = 0
 
 
             let productionOrderC = 0
@@ -404,7 +505,7 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                 }
             }
 
-            if (sessionData.jobTitle == "prodmanager") {
+            if (sessionData.jobTitle == "prodmanager" || sessionData.jobTitle == "wrhmanager") {
                 let infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
                 if (infoPr?.status) {
                     let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
@@ -412,11 +513,25 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
                     productionOrderC = countList[0]
                 }
+
+
+                let infoInventory = await this.getBatchInventory(sessionData.SessionId)
+                if (infoInventory?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoInventory.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    inventory1 = countList[0]
+                    inventory2 = countList[1]
+                    inventory3 = countList[2]
+                    inventory4 = countList[3]
+
+
+                }
             }
 
             let qualityReady1P = 0
             let qualityReady2P = 0
-
+            let inventoryQuality = 0
             if (sessionData.jobTitle == "qualitycontroller") {
                 let info = await this.getBatchQuality(sessionData.SessionId)
                 if (info?.status) {
@@ -425,6 +540,15 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
                     qualityReady1P = countList[0]
                     qualityReady2P = countList[1]
+                }
+
+
+                let infoInventory = await this.getBatchInventoryQuality(sessionData.SessionId)
+                if (infoInventory?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoInventory.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    inventoryQuality = countList[0]
                 }
             }
             try {
@@ -437,7 +561,7 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         },
                         {
                             title: 'Перемещение запасов',
-                            newMessage: false,
+                            newMessage: (+inventory1 + +inventory2 + +inventory3 + +inventory4) != 0,
                             path: 'inventoryTransferMenu'
                         },
                         {
@@ -449,14 +573,18 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         {
                             title: 'Производственные заказы',
                             newMessage: infoProduction().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
-                            path: 'productionOrdersMenu'
+                            path: 'inventoryTransferMenu'
                         },
                         {
                             title: 'Закупки',
                             newMessage: (+qualityReady1P + +qualityReady2P) != 0,
                             path: 'purchaseMenu'
-
-                        }
+                        },
+                        {
+                            title: 'Перемещение запасов',
+                            newMessage: (+inventoryQuality) != 0,
+                            path: 'inventoryTransferMenu'
+                        },
                     ],
                     'prodmanager': [
                         {
@@ -466,8 +594,8 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         },
                         {
                             title: 'Перемещение запасов',
-                            newMessage: false,
-                            path: ''
+                            newMessage: (+inventory1 + +inventory2 + +inventory3 + +inventory4) != 0,
+                            path: 'inventoryTransferMenu'
 
                         }
                     ]
@@ -665,6 +793,98 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
             return next(e)
         }
     }
+
+    inventoryMenu = async (req, res, next) => {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+
+            let inventory1 = 0
+            let inventory2 = 0
+            let inventory3 = 0
+            let inventory4 = 0
+            if (sessionData.jobTitle == "prodmanager" || sessionData.jobTitle == "wrhmanager") {
+                let infoInventory = await this.getBatchInventory(sessionData.SessionId)
+                if (infoInventory?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoInventory.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    inventory1 = countList[0]
+                    inventory2 = countList[1]
+                    inventory3 = countList[2]
+                    inventory4 = countList[3]
+                }
+            }
+
+            let inventoryQuality = 0
+            if (sessionData.jobTitle == "qualitycontroller") {
+                let infoInventory = await this.getBatchInventoryQuality(sessionData.SessionId)
+                if (infoInventory?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoInventory.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    inventoryQuality = countList[0]
+                }
+            }
+
+
+            try {
+                let obj = {
+                    'qualitycontroller': [
+                        {
+                            title: 'В проверке ОТК',
+                            newMessage: +inventoryQuality > 0,
+                            path: 'inventoryPendingQuality'
+                        },
+                        {
+                            title: 'Проверенные перемещения',
+                            newMessage: false,
+                            path: "inventoryComplatedQuality"
+                        }
+                    ],
+                    'wrhmanager': [
+                        {
+                            title: 'Запросы на перемещения',
+                            newMessage: inventory1 > 0,
+                            path: 'relocationRequests'
+                        },
+                        {
+                            title: 'Исходящие перемещения в ожидании',
+                            newMessage: false,
+                            path: "outgoingMovementsPending"
+                        },
+                        {
+                            title: 'Входящие перемещения в ожидании',
+                            newMessage: inventory2 > 0,
+                            path: "incomingMovementsPending"
+                        },
+                        {
+                            title: 'В проверке ОТК ',
+                            newMessage: inventory3 > 0,
+                            path: "inQualityControlInspection"
+                        },
+                        {
+                            title: 'В проверке ОТК ',
+                            newMessage: inventory4 > 0,
+                            path: "completedMovements"
+                        }
+                    ]
+                }
+                return res.status(200).json(obj[sessionData.jobTitle])
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+
 
 }
 

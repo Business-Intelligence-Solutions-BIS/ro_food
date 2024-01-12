@@ -277,6 +277,21 @@ class b1Controller {
             return next(e)
         }
     }
+    async ItemStock(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+
+            }
+            else {
+                return res.status(401).send()
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
     async ProductionOrders(req, res, next) {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -518,3 +533,5 @@ class b1Controller {
 }
 
 module.exports = new b1Controller()
+
+
