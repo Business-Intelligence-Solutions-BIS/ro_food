@@ -1,7 +1,7 @@
 [
     {
         "empId": 6,
-        "socket": "BNlhPKN2lR9VXzodAACK",
+        "socket": "ib0ZNYVsD8fmb1PgAAAQ",
         "wrh": "S5",
         "job": "qualitycontroller"
     },
@@ -19,8 +19,20 @@
     },
     {
         "empId": 12,
-        "socket": "Y3QhyHd6OTmOW-vnAAAN",
+        "socket": "DNdRykiYbVmgahDxAAAN",
         "wrh": "S1",
         "job": "prodmanager"
+    },
+    {
+        "empId": 11,
+        "socket": "sHQk_a3fJRtsakFiAAAa",
+        "wrh": "S1",
+        "job": "prodmanager"
+    },
+    {
+        "empId": 13,
+        "socket": "g2SL3pNdY32fp6DsAAAX",
+        "wrh": "A1",
+        "job": "qualitycontroller"
     }
 ]

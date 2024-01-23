@@ -111,7 +111,6 @@ class CustomController {
             }
         }
     }
-
     getUserInfo = async ({ headers }, { empID }) => {
         const permissions = await findUserPermissions(empID)
         const branchInfo = await this.getUserBranchInfo(headers, empID)
@@ -156,72 +155,6 @@ class CustomController {
             return next(e)
         }
     }
-    // notification = async (req, res, next) => {
-    //     try {
-    //         const sessionId = req.cookies['B1SESSION'];
-    //         const sessionData = findSession(sessionId);
-    //         let { skip = 0, api } = req.query
-    //         if (!sessionData) {
-    //             return res.status(401).send()
-    //         }
-    //         if (!api) {
-    //             return res.status(404).send({ message: 'Api not found' })
-    //         }
-
-    //         try {
-    //             let notification = []
-    //             if (sessionData?.jobTitle == 'qualitycontroller') {
-    //                 notification = infoNotification().filter(item => item?.qualityEmpId == sessionData.empID && item?.api == api)
-    //             }
-    //             else if (sessionData?.jobTitle == 'wrhmanager') {
-    //                 notification = infoNotification().filter(item => item?.toEmpId == sessionData.empID && item?.api == api)
-    //             }
-    //             let actNotification = notification
-    //             notification = notification.slice(skip, +skip + 20)
-    //             let len = notification.length
-    //             let slLen = actNotification.slice(skip, +skip + 21).length
-    //             notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
-    //             return res.status(200).json(notification)
-    //         }
-    //         catch (err) {
-    //             return res.status(err?.response?.status || 400).json(err?.response?.data || err)
-    //         }
-
-    //     }
-    //     catch (e) {
-    //         return next(e)
-    //     }
-    // }
-
-    // async stockTransferRequest(body, token) {
-    //     try {
-    //         body.StockTransferLines = body.StockTransferLines.map(item => {
-    //             delete item.ItemName
-    //             return item
-    //         })
-    //         const axios = Axios.create({
-    //             baseURL: "https://su26-02.sb1.cloud",
-    //             timeout: 30000,
-    //             headers: {
-    //                 Cookie: `B1SESSION=${token}; ROUTEID=.node2`,
-    //             },
-    //             httpsAgent: new https.Agent({
-    //                 rejectUnauthorized: false,
-    //             }),
-    //         });
-    //         return axios
-    //             .post('/ServiceLayer/b1s/v2/StockTransfers', body)
-    //             .then(({ data }) => {
-    //                 return { status: true, data }
-    //             })
-    //             .catch(async (err) => {
-    //                 return { status: false, message: get(err, 'response.data', 'error') }
-    //             });
-    //     }
-    //     catch (e) {
-    //         return { status: false, message: e }
-    //     }
-    // }
 
     getBatch = async (token) => {
         try {
@@ -426,8 +359,7 @@ GET /b1s/v1/PurchaseOrders/$count?$filter=U_otk_seen eq 'false' and U_typeorder 
             return { status: false, message: e }
         }
     }
-
-    getProductionOrderBatch = async (token) => {
+    getBatchProdManagerProduction = async (token) => {
         try {
             const sessionData = findSession(token);
             let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
@@ -436,7 +368,7 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 1 
 
-GET /b1s/v1/ProductionOrders/$count?$filter=U_processPr eq 'open' and Warehouse eq '${sessionData.wrh}' and ProductionOrderStatus eq 'boposReleased' and U_dp_seen eq  'false' and CompletedQuantity lt PlannedQuantity
+GET /b1s/v1/ProductionOrders/$count?$filter=U_proizvod_status eq 'proizvod_status_new' and Warehouse eq '${sessionData.wrh}' and ProductionOrderStatus eq 'boposReleased' and U_proizvod_nach_seen eq  'false'
 
 --batch_36522ad7-fc75-4b56-8c71-56071383e77c 
 
@@ -444,10 +376,48 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 2 
 
-GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.empID} and DocEntry gt ${get(sessionData, 'PurchaseInvoices', 1)} and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'false' and U_proizvod_postuplenya_sklad eq '${sessionData.wrh}' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
 
---batch_36522ad7-fc75-4b56-8c71-56071383e77c--
-            `
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--`
+
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud",
+                timeout: 30000,
+                headers: {
+                    'Content-Type': "multipart/mixed;boundary=batch_36522ad7-fc75-4b56-8c71-56071383e77c",
+                    'Cookie': `B1SESSION=${token}; ROUTEID=.node2`,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .post('/ServiceLayer/b1s/v2/$batch', body)
+                .then(({ data }) => {
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, message: get(err, 'response.data', 'error') }
+                });
+        }
+        catch (e) {
+            return { status: false, message: e }
+        }
+    }
+
+    getBatchQualityControllerProduction = async (token) => {
+        try {
+            const sessionData = findSession(token);
+            let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 1 
+
+GET /b1s/v1/ProductionOrders/$count?$filter=U_proizvod_status eq 'proizvod_status_otk' and ProductionOrderStatus eq 'boposReleased' and U_proizvod_otk_seen eq 'false'
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c`
+
             const axios = Axios.create({
                 baseURL: "https://su26-02.sb1.cloud",
                 timeout: 30000,
@@ -506,15 +476,6 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
             }
 
             if (sessionData.jobTitle == "prodmanager" || sessionData.jobTitle == "wrhmanager") {
-                let infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
-                if (infoPr?.status) {
-                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
-                    let match = infoPr.data.match(regexPattern);
-                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                    productionOrderC = countList[0]
-                }
-
-
                 let infoInventory = await this.getBatchInventory(sessionData.SessionId)
                 if (infoInventory?.status) {
                     let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
@@ -524,8 +485,6 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     inventory2 = countList[1]
                     inventory3 = countList[2]
                     inventory4 = countList[3]
-
-
                 }
             }
 
@@ -551,6 +510,34 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     inventoryQuality = countList[0]
                 }
             }
+
+
+            let prodOneMenu1 = 0
+            let prodOneMenu2 = 0
+            let qualityOneMenu = 0
+
+            if (sessionData.jobTitle == "prodmanager") {
+                let infoPr = await this.getBatchProdManagerProduction(sessionData.SessionId)
+                if (infoPr?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoPr.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    prodOneMenu1 = +countList[0]
+                    prodOneMenu2 = +countList[1]
+                }
+            }
+
+
+            if (sessionData.jobTitle == "qualitycontroller") {
+                let infoPr = await this.getBatchQualityControllerProduction(sessionData.SessionId)
+                if (infoPr?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoPr.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    qualityOneMenu = +countList[0]
+                }
+            }
+
             try {
                 let obj = {
                     'wrhmanager': [
@@ -572,8 +559,8 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     'qualitycontroller': [
                         {
                             title: 'Производственные заказы',
-                            newMessage: infoProduction().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
-                            path: 'inventoryTransferMenu'
+                            newMessage: +qualityOneMenu > 0,
+                            path: 'productionOrdersMenu'
                         },
                         {
                             title: 'Закупки',
@@ -589,7 +576,7 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     'prodmanager': [
                         {
                             title: 'Производственные заказы',
-                            newMessage: productionOrderC > 0,
+                            newMessage: (+prodOneMenu1 + +prodOneMenu2) > 0,
                             path: 'productionOrdersMenu'
                         },
                         {
@@ -638,16 +625,6 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                 }
             }
 
-            let infoPr;
-            if (sessionData.jobTitle == "prodmanager") {
-                infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
-                if (infoPr?.status) {
-                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
-                    let match = infoPr.data.match(regexPattern);
-                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                    productionOrderC = countList[0]
-                }
-            }
 
             let qualityReady1P = 0
             let qualityReady2P = 0
@@ -713,6 +690,33 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                             path: "menu4OTK"
                         },
                     ],
+                    'prodmanager': [
+                        {
+                            title: 'Заказ на закупку',
+                            newMessage: +newS != 0,
+                            path: 'purchaseOrder'
+                        },
+                        {
+                            title: 'В ожидании проверки OTK N1',
+                            newMessage: +read_otk != 0,
+                            path: 'pendingVerification'
+                        },
+                        {
+                            title: 'Проверенные',
+                            newMessage: +checked_otk != 0,
+                            path: 'verified'
+                        },
+                        {
+                            title: 'В ожидании проверки OTK N1',
+                            newMessage: false,
+                            path: 'pendingVerification2'
+                        },
+                        {
+                            title: 'Завершенные закупки',
+                            newMessage: +falseS != 0,
+                            path: "purchaseCompletion"
+                        }
+                    ],
                 }
                 return res.status(200).json(obj[sessionData.jobTitle])
             }
@@ -734,15 +738,30 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                 return res.status(401).send()
             }
 
+            let prodOneMenu1 = 0
+            let prodOneMenu2 = 0
+            let qualityOneMenu = 0
 
-            let productionOrderC = 0
+            if (sessionData.jobTitle == "prodmanager") {
+                let infoPr = await this.getBatchProdManagerProduction(sessionData.SessionId)
+                if (infoPr?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoPr.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    prodOneMenu1 = +countList[0]
+                    prodOneMenu2 = +countList[1]
+                }
+            }
 
-            let infoPr = await this.getProductionOrderBatch(sessionData.SessionId)
-            if (infoPr?.status && sessionData.jobTitle == "prodmanager") {
-                let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
-                let match = infoPr.data.match(regexPattern);
-                let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                productionOrderC = countList[0]
+
+            if (sessionData.jobTitle == "qualitycontroller") {
+                let infoPr = await this.getBatchQualityControllerProduction(sessionData.SessionId)
+                if (infoPr?.status) {
+                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+                    let match = infoPr.data.match(regexPattern);
+                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+                    qualityOneMenu = +countList[0]
+                }
             }
 
             try {
@@ -750,7 +769,7 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     'qualitycontroller': [
                         {
                             title: 'В ожидании проверки',
-                            newMessage: infoProduction().filter(item => !item.qualitySeen && item.qualityEmpId == sessionData?.empID)?.length > 0,
+                            newMessage: qualityOneMenu > 0,
                             path: 'bossPendingVerification3'
                         },
                         {
@@ -762,7 +781,7 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                     'prodmanager': [
                         {
                             title: 'Открытые',
-                            newMessage: productionOrderC > 0,
+                            newMessage: prodOneMenu1 > 0,
                             path: 'bossOpen1'
                         },
                         {
@@ -777,7 +796,7 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                         },
                         {
                             title: 'Завершенные',
-                            newMessage: false,
+                            newMessage: prodOneMenu2 > 0,
                             path: "bossCompleted4"
                         },
                     ]
@@ -867,7 +886,34 @@ GET /b1s/v1/PurchaseInvoices/$count?$filter=DocumentsOwner eq ${sessionData?.emp
                             path: "inQualityControlInspection"
                         },
                         {
+                            title: 'Завершенные перемещения',
+                            newMessage: inventory4 > 0,
+                            path: "completedMovements"
+                        }
+                    ],
+                    'prodmanager': [
+                        {
+                            title: 'Запросы на перемещения',
+                            newMessage: inventory1 > 0,
+                            path: 'relocationRequests'
+                        },
+                        {
+                            title: 'Исходящие перемещения в ожидании',
+                            newMessage: false,
+                            path: "outgoingMovementsPending"
+                        },
+                        {
+                            title: 'Входящие перемещения в ожидании',
+                            newMessage: inventory2 > 0,
+                            path: "incomingMovementsPending"
+                        },
+                        {
                             title: 'В проверке ОТК ',
+                            newMessage: inventory3 > 0,
+                            path: "inQualityControlInspection"
+                        },
+                        {
+                            title: 'Завершенные перемещения',
                             newMessage: inventory4 > 0,
                             path: "completedMovements"
                         }

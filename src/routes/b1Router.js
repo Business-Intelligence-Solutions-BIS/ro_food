@@ -10,6 +10,7 @@ router.get('/api/userData', customController.userData)
 router.get('/api/menu', customController.menu)
 router.get('/api/purchaseMenu', customController.purchaseMenu)
 router.get('/api/productionMenu', customController.productionMenu)
+router.get('/api/inventoryMenu', customController.inventoryMenu)
 
 // router.get('/api/StockTransfersGet', b1Controller.StockTransfersGet)
 // router.post('/api/StockTransfers', b1Controller.StockTransfers)

@@ -98,43 +98,23 @@
     "sessions": [
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "17887d74-9d68-11ee-8000-005056984211",
+            "SessionId": "1e26e084-b795-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
-            "empID": 7,
-            "startedAt": 1702878092053,
+            "empID": 12,
+            "startedAt": 1705756159557,
             "wrh": "S1",
-            "jobTitle": "wrhmanager",
-            "PurchaseOrders": 46,
-            "PurchaseInvoices": 66
+            "jobTitle": "prodmanager",
+            "PurchaseOrders": 0,
+            "PurchaseInvoices": 0
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "90559fea-b152-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 3,
-            "startedAt": 1705067867955,
-            "wrh": "A1",
-            "jobTitle": "wrhmanager",
-            "PurchaseOrders": 59,
-            "PurchaseInvoices": 143
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "7d437a4c-8c60-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 4,
-            "startedAt": 1701005655443
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "167df058-ac7c-11ee-8000-005056984211",
+            "SessionId": "3472594a-b795-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 6,
-            "startedAt": 1704535946246,
+            "startedAt": 1705756197186,
             "wrh": "S5",
             "jobTitle": "qualitycontroller",
             "PurchaseOrders": 0,
@@ -142,15 +122,11 @@
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "43c209cc-b155-11ee-8000-005056984211",
+            "SessionId": "e525fa10-ba08-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
-            "empID": 12,
-            "startedAt": 1705069027855,
-            "wrh": "S1",
-            "jobTitle": "prodmanager",
-            "PurchaseOrders": 0,
-            "PurchaseInvoices": 0
+            "empID": 7,
+            "startedAt": 1706025787541
         }
     ]
 }
