@@ -122,11 +122,11 @@
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "e525fa10-ba08-11ee-8000-005056984211",
+            "SessionId": "616979f6-ba10-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 7,
-            "startedAt": 1706025787541
+            "startedAt": 1706029002213
         }
     ]
 }

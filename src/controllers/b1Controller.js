@@ -9,6 +9,7 @@ const CustomController = require("./customController");
 const Controller = require("./customController");
 const ShortUniqueId = require('short-unique-id');
 const customController = require("./customController");
+const { GetItemStock } = require("./customController");
 const { randomUUID } = new ShortUniqueId({ length: 10 });
 class b1Controller {
     async test(req, res, next) {
@@ -277,21 +278,21 @@ class b1Controller {
             return next(e)
         }
     }
-    async ItemStock(req, res, next) {
-        try {
-            const sessionId = req.cookies['B1SESSION'];
-            const sessionData = findSession(sessionId);
-            if (sessionData) {
+    // async ItemStock(req, res, next) {
+    //     try {
+    //         const sessionId = req.cookies['B1SESSION'];
+    //         const sessionData = findSession(sessionId);
+    //         if (sessionData) {
 
-            }
-            else {
-                return res.status(401).send()
-            }
-        }
-        catch (e) {
-            return next(e)
-        }
-    }
+    //         }
+    //         else {
+    //             return res.status(401).send()
+    //         }
+    //     }
+    //     catch (e) {
+    //         return next(e)
+    //     }
+    // }
     async ProductionOrders(req, res, next) {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -496,7 +497,20 @@ class b1Controller {
         }
     }
 
-
+    async ReturnItemStock(req, res, next) {
+        try {
+            let GetItem = await GetItemStock(req, res, next)
+            if (GetItem.status) {
+                return res.status(200).json(GetItem.data)
+            }
+            else {
+                return res.status(404).json(GetItem.message)
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
 
     async patch(req, res, next) {
         try {

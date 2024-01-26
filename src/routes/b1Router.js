@@ -19,7 +19,6 @@ router.get('/api/inventoryMenu', customController.inventoryMenu)
 router.post('/api/login', b1Controller.login)
 router.post('/api/PurchaseOrders', b1Controller.PurchaseOrders)
 
-router.post('/api/ItemStock', b1Controller.ItemStock)
 
 router.get('/api/PurchaseOrdersGet', b1Controller.PurchaseOrdersGet)
 router.post('/api/PurchaseOrdersStatus', b1Controller.PurchaseOrdersStatus)
@@ -28,6 +27,9 @@ router.post('/api/ProductionOrders', b1Controller.ProductionOrders)
 router.post('/api/ProductionOrdersStatus', b1Controller.ProductionOrdersStatus)
 
 router.get('/api/ProductionOrdersGet', b1Controller.ProductionOrdersGet)
+
+
+router.get('/api/ItemStock', b1Controller.ReturnItemStock)
 
 
 

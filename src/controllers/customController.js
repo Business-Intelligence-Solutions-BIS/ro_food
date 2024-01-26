@@ -407,7 +407,6 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
 
     getBatchQualityControllerProduction = async (token) => {
         try {
-            const sessionData = findSession(token);
             let body = `--batch_36522ad7-fc75-4b56-8c71-56071383e77c
 
 Content-Type: application/http 
@@ -416,7 +415,15 @@ Content-ID: 1
 
 GET /b1s/v1/ProductionOrders/$count?$filter=U_proizvod_status eq 'proizvod_status_otk' and ProductionOrderStatus eq 'boposReleased' and U_proizvod_otk_seen eq 'false'
 
---batch_36522ad7-fc75-4b56-8c71-56071383e77c`
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c
+
+Content-Type: application/http 
+Content-Transfer-Encoding: binary 
+Content-ID: 2 
+
+GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'false' and U_proizvod_postuplenya_sklad eq '${sessionData.wrh}' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+
+--batch_36522ad7-fc75-4b56-8c71-56071383e77c--`
 
             const axios = Axios.create({
                 baseURL: "https://su26-02.sb1.cloud",
@@ -598,6 +605,39 @@ GET /b1s/v1/ProductionOrders/$count?$filter=U_proizvod_status eq 'proizvod_statu
         }
     }
 
+    GetItemStock = async (req, res, next) => {
+        try {
+            let { itemCode, whs } = req.query
+            delete req.headers.host
+            delete req.headers['content-length']
+            let authKey = `Basic ${Buffer.from(
+                'llc_res_su26_adm:Kiw1bEW0P354'
+            ).toString('base64')}`
+            const axios = Axios.create({
+                baseURL: "https://su26-02.sb1.cloud:4300",
+                timeout: 30000,
+                headers: {
+                    'Authorization': authKey,
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+            return axios
+                .get(`/Exact/index.xsjs?itemCode=${itemCode}&whs=${whs}`)
+                .then(({ data }) => {
+                    console.log(data, ' bu data')
+                    return { status: true, data }
+                })
+                .catch(async (err) => {
+                    return { status: false, message: get(err, 'response.data', 'error') }
+                });
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+
     purchaseMenu = async (req, res, next) => {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -770,12 +810,12 @@ GET /b1s/v1/ProductionOrders/$count?$filter=U_proizvod_status eq 'proizvod_statu
                         {
                             title: 'В ожидании проверки',
                             newMessage: qualityOneMenu > 0,
-                            path: 'bossPendingVerification3'
+                            path: 'bossPendingVerification3OTK'
                         },
                         {
                             title: 'Проверенные',
                             newMessage: false,
-                            path: "bossCompleted4"
+                            path: "bossCompleted4OTK"
                         }
                     ],
                     'prodmanager': [
