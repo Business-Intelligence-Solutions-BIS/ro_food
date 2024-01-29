@@ -183,73 +183,29 @@ class b1Controller {
     //         return next(e)
     //     }
     // }
-    // async StockTransfersStatus(req, res, next) {
-    //     try {
-    //         const sessionId = req.cookies['B1SESSION'];
-    //         const sessionData = findSession(sessionId);
-    //         if (sessionData) {
-    //             let { status, job, uid } = req.body
-    //             let infoNot = infoNotification().find(item => item.uid == uid)
-    //             if (infoNot) {
-    //                 if (infoNot[job] == 0) {
-    //                     if (status) {
-    //                         updateNotification(uid, Object.fromEntries([[job, 2]]))
-    //                         let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
-    //                         let infoNotNew = infoNotification().find(item => item.uid == uid)
-    //                         if (roomId) {
-    //                             io.to(roomId.socket).emit('confirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
-    //                         }
-    //                         if (infoNotNew.wrhmanager == 2 && infoNotNew.qualitycontroller == 2) {
-    //                             deleteNotification(infoNotNew.uid)
-    //                         }
-    //                         writeMessage({ ...infoNotNew, date: new Date(), confirmed: job })
-    //                     }
-    //                     else {
-    //                         updateNotification(uid, Object.fromEntries([[job, 1]]))
-    //                         let roomId = infoRoom().find(item => item.empId == infoNot.fromEmpId)
-    //                         let infoNotNew = infoNotification().find(item => item.uid == uid)
-    //                         if (roomId) {
-    //                             io.to(roomId.socket).emit('notconfirmedStockTransfer', { ...infoNotNew, confirmed: job, path: "message", title: 'Перемещение запасов' })
-    //                         }
-    //                         writeMessage({ ...infoNotNew, date: new Date(), confirmed: job })
-    //                     }
-    //                     return res.status(200).send()
-    //                 }
-    //                 else {
-    //                     return res.status(403).send({ message: 'Tasdiqlay olmaysiz' })
-    //                 }
-    //             }
-    //             else {
-    //                 return res.status(404).send({ status: false, message: 'uid Topilmadi' })
-    //             }
-    //         }
-    //         else {
-    //             return res.status(401).send()
-    //         }
-    //     }
-    //     catch (e) {
-    //         return next(e)
-    //     }
-    // }
-    // async StockTransfersGet(req, res, next) {
-    //     try {
-    //         let { skip = 0 } = req.query
-    //         delete req.headers.host
-    //         delete req.headers['content-length']
-    //         const sessionId = req.cookies['B1SESSION'];
-    //         const sessionData = findSession(sessionId);
-    //         let notification = infoNotification().filter(item => item.fromEmpId == sessionData?.empID && item.api == 'StockTransfers')
-    //         let actNotification = notification
-    //         notification = notification.slice(skip, +skip + 20)
-    //         let len = notification.length
-    //         let slLen = actNotification.slice(skip, +skip + 21).length
-    //         notification = { data: notification, nextPage: (len != slLen ? (+skip + 20) : - 1) }
-    //         return res.status(200).json(notification);
-    //     }
-    //     catch (e) {
-    //         return next(e)
-    //     }
-    // }
+    async ProductionOrderSocket(req, res, next) {
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            const sessionData = findSession(sessionId);
+            if (sessionData) {
+                let { status } = req.body // status true otk ga false wrh ga
+                console.log(status, typeof status)
+                let roomId = status ? infoRoom().find(item => item.job == "qualitycontroller")?.socket : infoRoom().find(item => item.wrh == get(req, 'body.wrh'))?.socket;
+                if (roomId) {
+                    console.log('ketdi ', roomId)
+                    io.to(roomId).emit('productionOrder', get(req, 'body.send', {}))
+                }
+                return res.status(200).send()
+            }
+            else {
+                return res.status(401).send()
+            }
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+
 
     async PurchaseOrders(req, res, next) {
         try {

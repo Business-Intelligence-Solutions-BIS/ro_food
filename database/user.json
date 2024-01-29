@@ -98,11 +98,11 @@
     "sessions": [
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "1e26e084-b795-11ee-8000-005056984211",
+            "SessionId": "98e69dea-be94-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 12,
-            "startedAt": 1705756159557,
+            "startedAt": 1706525593550,
             "wrh": "S1",
             "jobTitle": "prodmanager",
             "PurchaseOrders": 0,
@@ -110,11 +110,11 @@
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "3472594a-b795-11ee-8000-005056984211",
+            "SessionId": "2c6a6d00-be9d-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 6,
-            "startedAt": 1705756197186,
+            "startedAt": 1706529276833,
             "wrh": "S5",
             "jobTitle": "qualitycontroller",
             "PurchaseOrders": 0,
@@ -122,11 +122,27 @@
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "616979f6-ba10-11ee-8000-005056984211",
+            "SessionId": "6d5c29ba-be8a-11ee-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 7,
-            "startedAt": 1706029002213
+            "startedAt": 1706521225583,
+            "wrh": "01",
+            "jobTitle": "wrhmanager",
+            "PurchaseOrders": 0,
+            "PurchaseInvoices": 0
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "6213839c-be93-11ee-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 3,
+            "startedAt": 1706525072340,
+            "wrh": "A1",
+            "jobTitle": "wrhmanager",
+            "PurchaseOrders": 0,
+            "PurchaseInvoices": 0
         }
     ]
 }

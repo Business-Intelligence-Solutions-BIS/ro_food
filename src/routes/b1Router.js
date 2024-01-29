@@ -5,16 +5,13 @@ const router = new Router()
 
 router.get('/api/test', b1Controller.test)
 router.get('/api/userData', customController.userData)
-// router.get('/api/notification', customController.notification)
-// router.get('/api/notificationMenu', customController.notificationMenu)
+
 router.get('/api/menu', customController.menu)
 router.get('/api/purchaseMenu', customController.purchaseMenu)
 router.get('/api/productionMenu', customController.productionMenu)
 router.get('/api/inventoryMenu', customController.inventoryMenu)
 
-// router.get('/api/StockTransfersGet', b1Controller.StockTransfersGet)
-// router.post('/api/StockTransfers', b1Controller.StockTransfers)
-// router.post('/api/StockTransfersStatus', b1Controller.StockTransfersStatus)
+
 
 router.post('/api/login', b1Controller.login)
 router.post('/api/PurchaseOrders', b1Controller.PurchaseOrders)
@@ -30,6 +27,7 @@ router.get('/api/ProductionOrdersGet', b1Controller.ProductionOrdersGet)
 
 
 router.get('/api/ItemStock', b1Controller.ReturnItemStock)
+router.post('/api/productionOrderSocket', b1Controller.ProductionOrderSocket)
 
 
 

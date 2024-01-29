@@ -421,7 +421,7 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 2 
 
-GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'false' and U_proizvod_postuplenya_sklad eq '${sessionData.wrh}' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
+GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'false' and DocumentStatus eq 'bost_Open'&$orderby=DocEntry desc
 
 --batch_36522ad7-fc75-4b56-8c71-56071383e77c--`
 
