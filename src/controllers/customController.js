@@ -41,7 +41,6 @@ class CustomController {
             const url = data.url + `EmployeesInfo?$filter=EmployeeCode eq '${UserName}' and ExternalEmployeeNumber eq '${Password}'&$select=EmployeeID`
 
             const resp = await Axios.get(url, config)
-
             if (!resp.data.value.length) {
                 return {
                     status: 401,
@@ -626,7 +625,6 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
             return axios
                 .get(`/Exact/index.xsjs?itemCode=${itemCode}&whs=${whs}`)
                 .then(({ data }) => {
-                    console.log(data, ' bu data')
                     return { status: true, data }
                 })
                 .catch(async (err) => {
