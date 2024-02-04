@@ -233,21 +233,13 @@ Content-Type: application/http
 Content-Transfer-Encoding: binary 
 Content-ID: 2
 
-GET /b1s/v1/InventoryTransferRequests/$count?$filter=DocumentStatus eq 'bost_Open' and U_zapros_zav_a_seen eq 'false' and ToWarehouse eq '${sessionData.wrh}' and U_zapros_status eq 'zapros_send'&$orderby=DocEntry desc
+GET /b1s/v1/InventoryTransferRequests/$count?$filter=DocumentStatus eq 'bost_Open' and U_zapros_zav_b_seen eq 'false' and ToWarehouse eq '${sessionData.wrh}' and U_zapros_status eq 'zapros_checked'&$orderby=DocEntry desc 
 
 --batch_36522ad7-fc75-4b56-8c71-56071383e77c--
 
 Content-Type: application/http 
 Content-Transfer-Encoding: binary 
 Content-ID: 3
-
-GET /b1s/v1/InventoryTransferRequests/$count?$filter=DocumentStatus eq 'bost_Open' and (FromWarehouse eq '${sessionData.wrh}') and (U_zapros_zav_a_seen eq 'false' or U_zapros_zav_b_seen eq 'false') and U_zapros_status eq 'zapros_otk_process'&$orderby=DocEntry desc
-
---batch_36522ad7-fc75-4b56-8c71-56071383e77c--
-
-Content-Type: application/http 
-Content-Transfer-Encoding: binary 
-Content-ID: 4
 
 GET /b1s/v1/StockTransfers/$count?$filter=DocumentStatus eq 'bost_Open' and (U_zapros_zav_a_seen eq 'false' or U_zapros_zav_b_seen eq 'false') and (FromWarehouse eq '${sessionData.wrh}' or ToWarehouse eq '${sessionData.wrh}')&$orderby=DocEntry desc
 
@@ -463,7 +455,6 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
 
             let inventory1 = 0
             let inventory2 = 0
-            let inventory3 = 0
             let inventory4 = 0
 
 
@@ -489,8 +480,7 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                     let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
                     inventory1 = countList[0]
                     inventory2 = countList[1]
-                    inventory3 = countList[2]
-                    inventory4 = countList[3]
+                    inventory4 = countList[2]
                 }
             }
 
@@ -554,7 +544,7 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                         },
                         {
                             title: 'Перемещение запасов',
-                            newMessage: (+inventory1 + +inventory2 + +inventory3 + +inventory4) != 0,
+                            newMessage: (+inventory1 + +inventory2 + +inventory4) != 0,
                             path: 'inventoryTransferMenu'
                         },
                         {
@@ -587,7 +577,7 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                         },
                         {
                             title: 'Перемещение запасов',
-                            newMessage: (+inventory1 + +inventory2 + +inventory3 + +inventory4) != 0,
+                            newMessage: (+inventory1 + +inventory2 + +inventory4) != 0,
                             path: 'inventoryTransferMenu'
 
                         }
@@ -861,7 +851,6 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
 
             let inventory1 = 0
             let inventory2 = 0
-            let inventory3 = 0
             let inventory4 = 0
             if (sessionData.jobTitle == "prodmanager" || sessionData.jobTitle == "wrhmanager") {
                 let infoInventory = await this.getBatchInventory(sessionData.SessionId)
@@ -871,8 +860,7 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                     let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
                     inventory1 = countList[0]
                     inventory2 = countList[1]
-                    inventory3 = countList[2]
-                    inventory4 = countList[3]
+                    inventory4 = countList[2]
                 }
             }
 
@@ -905,7 +893,7 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                     'wrhmanager': [
                         {
                             title: 'Запросы на перемещения',
-                            newMessage: inventory1 > 0,
+                            newMessage: +inventory1 > 0,
                             path: 'relocationRequests'
                         },
                         {
@@ -915,24 +903,19 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                         },
                         {
                             title: 'Входящие перемещения в ожидании',
-                            newMessage: inventory2 > 0,
+                            newMessage: +inventory2 > 0,
                             path: "incomingMovementsPending"
                         },
                         {
-                            title: 'В проверке ОТК ',
-                            newMessage: inventory3 > 0,
-                            path: "inQualityControlInspection"
-                        },
-                        {
                             title: 'Завершенные перемещения',
-                            newMessage: inventory4 > 0,
+                            newMessage: +inventory4 > 0,
                             path: "completedMovements"
                         }
                     ],
                     'prodmanager': [
                         {
                             title: 'Запросы на перемещения',
-                            newMessage: inventory1 > 0,
+                            newMessage: +inventory1 > 0,
                             path: 'relocationRequests'
                         },
                         {
@@ -942,17 +925,12 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                         },
                         {
                             title: 'Входящие перемещения в ожидании',
-                            newMessage: inventory2 > 0,
+                            newMessage: +inventory2 > 0,
                             path: "incomingMovementsPending"
                         },
                         {
-                            title: 'В проверке ОТК ',
-                            newMessage: inventory3 > 0,
-                            path: "inQualityControlInspection"
-                        },
-                        {
                             title: 'Завершенные перемещения',
-                            newMessage: inventory4 > 0,
+                            newMessage: +inventory4 > 0,
                             path: "completedMovements"
                         }
                     ]
