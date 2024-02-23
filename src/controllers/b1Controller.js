@@ -34,7 +34,6 @@ class b1Controller {
                 });
             }
 
-
             if (ret.headers['set-cookie'] && ret.headers['set-cookie'][0]) {
                 ret.headers['set-cookie'][0] += '; Path=/'
             }
@@ -62,7 +61,7 @@ class b1Controller {
             delete req.headers['content-length']
             if (b1Api) {
                 const axios = Axios.create({
-                    baseURL: "https://su26-02.sb1.cloud/",
+                    baseURL: "https://su26-02.sb1.cloud",
                     timeout: 30000,
                     headers: req.headers,
                     httpsAgent: new https.Agent({
@@ -72,10 +71,9 @@ class b1Controller {
                 return axios
                     .get(req.originalUrl)
                     .then(({ data }) => {
-                        if (['PurchaseOrders', 'PurchaseInvoices'].includes(b1Api) && data?.value?.length) {
+                        if (['PurchaseOrders', 'PurchaseInvoices', 'SQLQueries'].includes(b1Api) && data?.value?.length) {
                             const sessionId = req.cookies['B1SESSION'];
                             const sessionData = findSession(sessionId);
-                            if (sessionData?.jobTitle == 'wrhmanager') {
                                 let docEntryLists = data.value.map(item => item.DocEntry).filter(item => item > get(sessionData, `${b1Api}`, 0))
                                 if (docEntryLists?.length) {
                                     data.value = data.value.map(item => {
@@ -84,7 +82,6 @@ class b1Controller {
                                     let max = Math.max(...docEntryLists)
                                     updateEmp(sessionData?.empID, Object.fromEntries([[b1Api, max]]))
                                 }
-                            }
 
                         }
                         return res.status(200).json(data);
@@ -93,10 +90,12 @@ class b1Controller {
                         return res.status(get(err, 'response.status', 500)).json(get(err, 'response.data', `Error`))
                     });
             }
-            return res.status(404).json({ status: false, message: 'B1 Api not found' })
+            return res.status(404).json({ status: false, message: 'B1 Api not found' }
+            )
 
         }
         catch (e) {
+            console.log("erroor in 404 and exception")
             return next(e)
         }
     }
@@ -503,5 +502,3 @@ class b1Controller {
 }
 
 module.exports = new b1Controller()
-
-

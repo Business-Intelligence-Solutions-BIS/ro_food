@@ -1,8 +1,9 @@
 const { CREDENTIALS } = require("../credentials");
 const Axios = require("axios");
 const https = require("https");
-const { findSession, findUserPermissions, updateEmpWrh, infoNotification, infoMessage, infoPurchase, infoProduction } = require("../helpers");
+const { findSession, findUserPermissions, updateEmpWrh, infoNotification, infoMessage, infoPurchase, infoProduction, saveSession, deleteSession } = require("../helpers");
 const { get, groupBy } = require("lodash");
+const { setEngine } = require("crypto");
 
 class CustomController {
     async uiLogin({ UserName, Password, Company }) {
@@ -39,8 +40,9 @@ class CustomController {
 
         try {
             const url = data.url + `EmployeesInfo?$filter=EmployeeCode eq '${UserName}' and ExternalEmployeeNumber eq '${Password}'&$select=EmployeeID`
-
+            // const url = data.url + `EmployeesInfo?$filter=JobTitle eq '${UserName}' and OfficePhone  eq '${Password}'&$select=EmployeeID`
             const resp = await Axios.get(url, config)
+
             if (!resp.data.value.length) {
                 return {
                     status: 401,
@@ -130,10 +132,45 @@ class CustomController {
                 rejectUnauthorized: false,
             }),
         });
-        return await axios.get("https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/$crossjoin(EmployeesInfo, CustomBranches)?$expand=EmployeesInfo($select=EmployeeID,FirstName,LastName,SalesPersonCode,JobTitle),CustomBranches($select=DocEntry,U_Name,U_CashAccountUzs,U_CashAccountUsd,U_CardAccount,U_TransAccount,U_Warehouse)&$filter=EmployeesInfo/U_Branch eq CustomBranches/DocEntry and EmployeesInfo/EmployeeID eq " + empID)
+        let replydv = await axios.get("https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/$crossjoin(EmployeesInfo, skladlar_obyekt)?$expand=EmployeesInfo($select=EmployeeID,FirstName,LastName,SalesPersonCode,JobTitle),skladlar_obyekt($select=U_Sklad_udt,)&$filter=EmployeesInfo/U_Sklad eq skladlar_obyekt/DocEntry and EmployeesInfo/EmployeeID eq " + empID)
+        return  replydv;
     }
 
     userData = async (req, res, next) => {
+        // console.log("Malumot yetib keldi...........")
+        try {
+            const sessionId = req.cookies['B1SESSION'];
+            // console.log(sessionId)
+            const sessionData = findSession(sessionId);
+            // console.log(sessionData)
+            if (!sessionData) {
+                return res.status(401).send()
+            }
+            // console.log("Malumot yetib keldi")
+            // console.log("session: ", JSON.stringify(sessionData))
+            try {
+                const ret = await this.getUserInfo(req, sessionData)
+                // if (ret.EmployeesInfo.JobTitle !== "wrhmanager") {
+                //  res.status(403).json({
+                //     status: 403,
+                //     data: "You do not have permission",
+                //     });
+                //     return; 
+                // }
+                updateEmpWrh({ empID: get(ret, 'EmployeesInfo.EmployeeID'), wrh: get(ret, 'CustomBranches.U_Warehouse'), jobTitle: get(ret, 'EmployeesInfo.JobTitle') })
+                return res.status(200).json(ret);
+            }
+            catch (err) {
+                return res.status(err?.response?.status || 400).json(err?.response?.data || err)
+            }
+
+        }
+        catch (e) {
+            return next(e)
+        }
+    }
+
+    webUserData = async (req, res, next) => {
         try {
             const sessionId = req.cookies['B1SESSION'];
             const sessionData = findSession(sessionId);
@@ -142,6 +179,14 @@ class CustomController {
             }
             try {
                 const ret = await this.getUserInfo(req, sessionData)
+
+                // if (ret.EmployeesInfo.JobTitle !== "prodmanager") {
+                //  res.status(403).json({
+                //     status: 403,
+                //     data: "You do not have permission",
+                //     });
+                //     return; 
+                // }
                 updateEmpWrh({ empID: get(ret, 'EmployeesInfo.EmployeeID'), wrh: get(ret, 'CustomBranches.U_Warehouse'), jobTitle: get(ret, 'EmployeesInfo.JobTitle') })
                 return res.status(200).json(ret);
             }
@@ -507,7 +552,6 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                 }
             }
 
-
             let prodOneMenu1 = 0
             let prodOneMenu2 = 0
             let qualityOneMenu = 0
@@ -675,21 +719,21 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                             newMessage: +newS != 0,
                             path: 'purchaseOrder'
                         },
-                        {
-                            title: 'В ожидании проверки OTK N1',
-                            newMessage: +read_otk != 0,
-                            path: 'pendingVerification'
-                        },
-                        {
-                            title: 'Проверенные',
-                            newMessage: +checked_otk != 0,
-                            path: 'verified'
-                        },
-                        {
-                            title: 'В ожидании проверки OTK N1',
-                            newMessage: false,
-                            path: 'pendingVerification2'
-                        },
+                        // {
+                        //     title: 'В ожидании проверки OTK N1',
+                        //     newMessage: +read_otk != 0,
+                        //     path: 'pendingVerification'
+                        // },
+                        // {
+                        //     title: 'Проверенные',
+                        //     newMessage: +checked_otk != 0,
+                        //     path: 'verified'
+                        // },
+                        // {
+                        //     title: 'В ожидании проверки OTK N1',
+                        //     newMessage: false,
+                        //     path: 'pendingVerification2'
+                        // },
                         {
                             title: 'Завершенные закупки',
                             newMessage: +falseS != 0,
@@ -841,6 +885,12 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
         }
     }
 
+    socketTrigger = (req, res, next) =>{
+        if(req === "PURCHASE_ORDERS"){
+            
+        }
+    }
+
     inventoryMenu = async (req, res, next) => {
         try {
             const sessionId = req.cookies['B1SESSION'];
@@ -852,7 +902,7 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
             let inventory1 = 0
             let inventory2 = 0
             let inventory4 = 0
-            if (sessionData.jobTitle == "prodmanager" || sessionData.jobTitle == "wrhmanager") {
+            // if (sessionData.jobTitle == "prodmanager" || sessionData.jobTitle == "wrhmanager") {
                 let infoInventory = await this.getBatchInventory(sessionData.SessionId)
                 if (infoInventory?.status) {
                     let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
@@ -862,34 +912,39 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                     inventory2 = countList[1]
                     inventory4 = countList[2]
                 }
-            }
+            // }
 
-            let inventoryQuality = 0
-            if (sessionData.jobTitle == "qualitycontroller") {
-                let infoInventory = await this.getBatchInventoryQuality(sessionData.SessionId)
-                if (infoInventory?.status) {
-                    let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
-                    let match = infoInventory.data.match(regexPattern);
-                    let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
-                    inventoryQuality = countList[0]
-                }
-            }
+            // let inventoryQuality = 0
+            // if (sessionData.jobTitle == "qualitycontroller") {
+            //     let infoInventory = await this.getBatchInventoryQuality(sessionData.SessionId)
+            //     if (infoInventory?.status) {
+            //         let regexPattern = /OData-Version: 4\.0[^0-9]*([0-9]+\.?[0-9]*)/g;
+            //         let match = infoInventory.data.match(regexPattern);
+            //         let countList = match.map(item => item.replace(/OData-Version: 4.0\r\n\r\n/g, ''))
+            //         inventoryQuality = countList[0]
+            //     }
+            // }
 
 
             try {
                 let obj = {
-                    'qualitycontroller': [
-                        {
-                            title: 'В проверке ОТК',
-                            newMessage: +inventoryQuality > 0,
-                            path: 'inventoryPendingQuality'
-                        },
-                        {
-                            title: 'Проверенные перемещения',
-                            newMessage: false,
-                            path: "inventoryComplatedQuality"
-                        }
-                    ],
+                    // 'qualitycontroller': [
+                    //     {
+                    //         title: 'В проверке ОТК',
+                    //         newMessage: +inventoryQuality > 0,
+                    //         path: 'inventoryPendingQuality'
+                    //     },
+                    //     {
+                    //         title: 'Проверенные',
+                    //         newMessage: false,
+                    //         path: 'inQualityControlInspection'
+                    //     },
+                    //     {
+                    //         title: 'Проверенные перемещения',
+                    //         newMessage: false,
+                    //         path: "inventoryComplatedQuality"
+                    //     }
+                    // ],
                     'wrhmanager': [
                         {
                             title: 'Запросы на перемещения',
@@ -911,31 +966,31 @@ GET /b1s/v1/InventoryGenEntries/$count?$filter=U_proizvod_postuplenya_seen eq 'f
                             newMessage: +inventory4 > 0,
                             path: "completedMovements"
                         }
-                    ],
-                    'prodmanager': [
-                        {
-                            title: 'Запросы на перемещения',
-                            newMessage: +inventory1 > 0,
-                            path: 'relocationRequests'
-                        },
-                        {
-                            title: 'Исходящие перемещения в ожидании',
-                            newMessage: false,
-                            path: "outgoingMovementsPending"
-                        },
-                        {
-                            title: 'Входящие перемещения в ожидании',
-                            newMessage: +inventory2 > 0,
-                            path: "incomingMovementsPending"
-                        },
-                        {
-                            title: 'Завершенные перемещения',
-                            newMessage: +inventory4 > 0,
-                            path: "completedMovements"
-                        }
                     ]
+                    // 'prodmanager': [
+                    //     {
+                    //         title: 'Запросы на перемещения',
+                    //         newMessage: +inventory1 > 0,
+                    //         path: 'relocationRequests'
+                    //     },
+                    //     {
+                    //         title: 'Исходящие перемещения в ожидании',
+                    //         newMessage: false,
+                    //         path: "outgoingMovementsPending"
+                    //     },
+                    //     {
+                    //         title: 'Входящие перемещения в ожидании',
+                    //         newMessage: +inventory2 > 0,
+                    //         path: "incomingMovementsPending"
+                    //     },
+                    //     {
+                    //         title: 'Завершенные перемещения',
+                    //         newMessage: +inventory4 > 0,
+                    //         path: "completedMovements"
+                    //     }
+                    // ]
                 }
-                return res.status(200).json(obj[sessionData.jobTitle])
+                return res.status(200).json(obj['wrhmanager'])
             }
             catch (err) {
                 return res.status(err?.response?.status || 400).json(err?.response?.data || err)

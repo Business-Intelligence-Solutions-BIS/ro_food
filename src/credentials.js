@@ -1,19 +1,19 @@
 const CREDENTIALS = {
-    EXACT_TEST: {
+    ROFOD_TEST: {
         url: "https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/",
         credentials: {
-            CompanyDB: "AE10_EXACT_T01",
-            UserName: "sb1\\aea_user01a",
-            Password: "pAV0!-F3",
+            CompanyDB: "AE12_ROFOD_T11",
+            UserName: "sb1\\aej_user01a",
+            Password: "5E+1PU!I7",
             Language: 24
         }
     },
-    EXACT_PROD: {
+    ROFOD_PROD: {
         url: "https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/",
         credentials: {
-            CompanyDB: "AE10_EXACT_P01",
-            UserName: "sb1\\aea_user01a",
-            Password: "pAV0!-F3",
+            CompanyDB: "AE12_ROFOD_T11",
+            UserName: "sb1\\aej_user01a",
+            Password: "5E+1PU!I7",
             Language: 24
         }
     },

@@ -1,5 +1,6 @@
 
 
+const { count } = require("console");
 const fs = require("fs");
 const { get } = require("lodash");
 const path = require("path");
@@ -304,7 +305,6 @@ function saveSession(session) {
         JSON.stringify(db, null, 4));
 }
 
-
 function updateEmpWrh({ empID, wrh, jobTitle }) {
     let db = infoUser()
 
@@ -330,10 +330,6 @@ function updateEmp(empID, data) {
         JSON.stringify(db, null, 4));
 }
 
-
-
-
-
 module.exports = {
     writeUser,
     infoUser,
@@ -343,6 +339,7 @@ module.exports = {
     formatPermissions,
     getUPermissionsBySession,
     saveSession,
+    // deleteSession,
     infoRoom,
     infoNotification,
     writeNotification,

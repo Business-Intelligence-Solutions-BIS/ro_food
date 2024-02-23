@@ -1,1 +1,20 @@
-[]
+[
+    {
+        "empId": 6,
+        "socket": "-dDaDayL-Q2mSWnNAAAJ",
+        "wrh": 0,
+        "job": "wrhmanager"
+    },
+    {
+        "empId": 5,
+        "socket": "nLRStVkGcVp8trp3AAAb",
+        "wrh": 0,
+        "job": "manager"
+    },
+    {
+        "empId": 8,
+        "socket": "2p18BjM_5v2Tam4XAAAm",
+        "wrh": 0,
+        "job": "wrhmanager"
+    }
+]
