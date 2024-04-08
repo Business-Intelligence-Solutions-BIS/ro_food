@@ -1,4 +1,3 @@
-
 const Axios = require("axios");
 const https = require("https");
 const { get } = require("lodash");
@@ -12,6 +11,7 @@ const customController = require("./customController");
 const { GetItemStock } = require("./customController");
 const { randomUUID } = new ShortUniqueId({ length: 10 });
 class b1Controller {
+    
     async test(req, res, next) {
         try {
             return res.status(201).json('Assalomu Aleykum')
@@ -51,6 +51,63 @@ class b1Controller {
         }
         catch (e) {
             return next(e)
+        }
+    }
+
+    async login1(req, res, next) {
+        const axios = require('axios');
+
+        console.log("Bu yerga keldi")
+let config = {
+  method: 'get',
+  maxBodyLength: Infinity,
+  url: 'https://mannco.store/items/get?price=DESC&page=0&game=252490&skip=0',
+  headers: { }
+};
+
+axios.request(config)
+.then((response) => {
+  console.log(JSON.stringify(response.data));
+})
+.catch((error) => {
+  console.log(error);
+});
+    }
+
+
+    async getItemsByGroups(req, res, next) {
+        try {
+                   // Extracting query parameters
+                const { ParentGroup, ItemCode, ItemName, SubGroup, SubSubGroup, maxpagesize = 10 } = req.query;
+
+            // Constructing the URL with query parameters
+            let url = 'https://su26-02.sb1.cloud:4300/RoFood/app.xsjs/getItemsByGroups?';
+            if (ParentGroup) url += `ParentGroup=${ParentGroup}&`;
+            if (ItemCode) url += `ItemCode=${ItemCode}&`;
+            if (ItemName) url += `ItemName=%25${ItemName}%25&`; // Encoding the ItemName
+            if (SubGroup) url += `SubGroup=${SubGroup}&`;
+            if (SubSubGroup) url += `SubSubGroup=${SubSubGroup}&`;
+            url = url.slice(0, -1); // Remove the trailing '&' if present
+
+            const config = {
+                method: 'get',
+                url,
+                headers: {
+                    'Prefer': 'odata.maxpagesize=' + maxpagesize,
+                },
+                auth: {
+                    username: 'llc_res_su26_adm',
+                    password: 'Kiw1bEW0P354'
+                }
+            };
+
+            // Making the request
+            const response = await Axios(config);
+            
+            // Returning the data received from the API
+            res.status(200).json(response.data);
+        } catch (error) {
+            next(error);
         }
     }
 

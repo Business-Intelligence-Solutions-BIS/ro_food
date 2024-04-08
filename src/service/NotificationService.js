@@ -1,0 +1,12 @@
+const Axios = require("axios");
+const https = require("https");
+const { get } = require("lodash");
+const { io, socket, socketIo } = require("../config");
+const { CREDENTIALS } = require("../credentials");
+const { writeUser, saveSession, writeRoom, writeTransferRequest, findSession, writeNotification, infoRoom, infoUser, infoNotification, writeMessage, updateNotification, deleteNotification, writePurchase, infoPurchase, updatePurchase, updatePurchaseTrue, updateEmp, deletePurchase, infoProduction, updateProductionTrue, deleteProductionOrders, updateProduction, writeProductionOrders } = require("../helpers");
+const CustomController = require("./customController");
+const Controller = require("./customController");
+const ShortUniqueId = require('short-unique-id');
+const customController = require("./customController");
+const { GetItemStock } = require("./customController");
+const { randomUUID } = new ShortUniqueId({ length: 10 });

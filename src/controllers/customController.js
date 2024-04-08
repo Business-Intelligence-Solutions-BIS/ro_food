@@ -129,7 +129,7 @@ class CustomController {
             timeout: 30000,
             headers,
             httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
+                rejectUnauthorized: false,  
             }),
         });
         let replydv = await axios.get("https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/$crossjoin(EmployeesInfo, skladlar_obyekt)?$expand=EmployeesInfo($select=EmployeeID,FirstName,LastName,SalesPersonCode,JobTitle),skladlar_obyekt($select=U_Sklad_udt,)&$filter=EmployeesInfo/U_Sklad eq skladlar_obyekt/DocEntry and EmployeesInfo/EmployeeID eq " + empID)
