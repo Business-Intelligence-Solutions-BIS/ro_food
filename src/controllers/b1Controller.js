@@ -127,8 +127,8 @@ class b1Controller {
 					Prefer: 'odata.maxpagesize=' + maxpagesize,
 				},
 				auth: {
-					username: '',
-					password: '',
+					username: 'llc_res_su26_adm',
+					password: 'Kiw1bEW0P354',
 				},
 			}
 
