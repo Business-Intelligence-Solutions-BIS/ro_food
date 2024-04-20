@@ -149,7 +149,8 @@
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 13,
-            "startedAt": 1706783569363
+            "startedAt": 1706783569363,
+            "token": "4546903"
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
@@ -160,7 +161,8 @@
             "startedAt": 1708421025208,
             "jobTitle": "manager",
             "PurchaseOrders": 46,
-            "PurchaseInvoices": 0
+            "PurchaseInvoices": 0,
+            "token": "4546903"
         },
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",

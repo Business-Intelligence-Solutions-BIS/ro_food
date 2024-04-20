@@ -1,0 +1,21 @@
+{
+    "messages":[
+        {
+            "id":1000,
+            "content":{
+                "en":{
+                    "body":"Hello World",
+                    "header":"Hello World"
+                },
+                "ru":{
+                    "body":"Hello World",
+                    "header":"Hello World"
+                },
+                "uz":{
+                    "body":"Hello World",
+                    "header":"Hello World"
+                }
+            }
+        }
+    ]
+}
