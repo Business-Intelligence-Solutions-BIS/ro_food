@@ -33,7 +33,7 @@ const { stat } = require('fs')
 const { randomUUID } = new ShortUniqueId({ length: 10 })
 const userJson = require('../../database/user.json')
 const messageJson = require('../../database/message.json')
-const {sendNotification} = require('../service/index')
+const {sendNotification, sendNotification1} = require('../service/index')
 const fs = require('fs')
 
 class b1Controller {
@@ -47,9 +47,11 @@ class b1Controller {
 
 	async login(req, res, next) {
 		try {
+			const {lang, deviceId, token} = req.body;
 			delete req.headers.host
 			delete req.headers['content-length']
 			const ret = await CustomController.uiLogin(req.body)
+
 			if (ret.status !== 200 && ret.status !== 201) {
 				return res.status(ret.status || 400).send({
 					error: {
@@ -71,31 +73,33 @@ class b1Controller {
 			res.set({
 				...ret.headers,
 			})
-			return res.status(ret.status).send(ret.data)
+			const userData = await CustomController.userData(ret.data.SessionId);
+
+			if (!userData || userData === 401) {
+    			return res.status(401).json({ status: false, message: "Session is not found" });
+			} else if (userData === 400) {
+			    return res.status(400).json({ status: false, message: "Bad request" });
+			}else{
+				userData.sessionId = ret.data.SessionId
+
+				console.log(JSON.stringify(userData, 2))
+				console.log(lang, token, deviceId)
+
+				const upToken = await updateToken(lang, token, deviceId, userData.EmployeesInfo.EmployeeID)
+
+				if(upToken === 409){
+					return res
+					.status(409)
+					.json({ status: false, message: 'Check properties(lang, token, deviceId)' })
+				}
+
+				return res
+				.status(ret.status)
+				.json(userData)
+			}
 		} catch (e) {
 			return next(e)
 		}
-	}
-
-	async login1(req, res, next) {
-		const axios = require('axios')
-
-		console.log('Bu yerga keldi')
-		const config = {
-			method: 'get',
-			maxBodyLength: Number.POSITIVE_INFINITY,
-			url: 'https://mannco.store/items/get?price=DESC&page=0&game=252490&skip=0',
-			headers: {},
-		}
-
-		axios
-			.request(config)
-			.then((response) => {
-				console.log(JSON.stringify(response.data))
-			})
-			.catch((error) => {
-				console.log(error)
-			})
 	}
 
 	async getItemsByGroups(req, res, next) {
@@ -237,435 +241,6 @@ class b1Controller {
 		}
 	}
 
-	// async StockTransfers(req, res, next) {
-	//     try {
-	//         console.log('ishlavoti')
-	//         const sessionId = req.cookies['B1SESSION'];
-	//         const sessionData = findSession(sessionId);
-	//         console.log(sessionData, ' bu sessionData')
-	//         if (sessionData) {
-	//             let wrhRoomId = infoRoom().find(item => item?.wrh == get(req, 'body.ToWarehouse'))
-	//             let qualityControllerRoomId = infoRoom().find(item => item?.job == 'qualitycontroller')
-	//             if (wrhRoomId) {
-	//                 io.to(wrhRoomId.socket).emit('notification', {
-	//                     ...req.body,
-	//                     empId: get(sessionData, 'empID'),
-	//                     api: 'StockTransfers',
-	//                     path: 'notificationStockTransfers',
-	//                     title: 'На утверждении'
-	//                 })
-	//             }
-	//             if (qualityControllerRoomId) {
-	//                 io.to(qualityControllerRoomId.socket).emit('notification', {
-	//                     ...req.body,
-	//                     empId: get(sessionData, 'empID'),
-	//                     api: 'StockTransfers',
-	//                     path: 'notificationStockTransfers',
-	//                     title: 'На утверждении'
-	//                 })
-	//             }
-	//             let uid = randomUUID()
-	//             let toEmpId = infoUser().sessions.find((item) => item.wrh == get(req, 'body.ToWarehouse'))?.empID
-	//             let qualityEmpId = infoUser().sessions.find((item) => item.jobTitle == 'qualitycontroller')?.empID
-	//             if (toEmpId && qualityEmpId) {
-	//                 writeNotification({ date: new Date(), body: req.body, uid, fromEmpId: get(sessionData, 'empID'), toEmpId, qualityEmpId, path: 'notificationStockTransfers', api: 'StockTransfers', wrhmanager: 0, qualitycontroller: 0 })
-	//                 return res.status(201).send({ status: true })
-	//             }
-	//             else if (!toEmpId) {
-	//                 return res.status(404).send({ status: false, message: 'Warehouse Employe not found' })
-	//             }
-	//             else if (!qualityEmpId) {
-	//                 return res.status(404).send({ status: false, message: 'Quality Controller not found' })
-	//             }
-
-	//         }
-	//         else {
-	//             return res.status(401).send()
-	//         }
-	//     }
-	//     catch (e) {
-	//         return next(e)
-	//     }
-	// }
-	async ProductionOrderSocket(req, res, next) {
-		try {
-			const sessionId = req.cookies['B1SESSION']
-			const sessionData = findSession(sessionId)
-			if (sessionData) {
-				const { status } = req.body // status true otk ga false wrh ga
-				console.log(status, typeof status)
-				const roomId = status
-					? infoRoom().find((item) => item.job == 'qualitycontroller')?.socket
-					: infoRoom().find((item) => item.wrh == get(req, 'body.wrh'))?.socket
-				if (roomId) {
-					console.log('ketdi ', roomId)
-					io.to(roomId).emit('productionOrder', get(req, 'body.send', {}))
-				}
-				return res.status(200).send()
-			} else {
-				return res.status(401).send()
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-
-	async PurchaseOrders(req, res, next) {
-		try {
-			const sessionId = req.cookies['B1SESSION']
-			const sessionData = findSession(sessionId)
-			if (sessionData) {
-				const qualityEmpId = infoUser().sessions.find(
-					(item) => item.jobTitle == 'qualitycontroller',
-				)?.empID
-				const uid = randomUUID()
-				if (qualityEmpId) {
-					const roomId = infoRoom().map(
-						(item) => item.empId == qualityEmpId,
-					).socket
-					io.to(roomId).emit('notification', {
-						qualitySeen: false,
-						empSeen: false,
-						createDate: new Date(),
-						body: req.body,
-						uid,
-						fromEmpId: get(sessionData, 'empID'),
-						qualityEmpId,
-						qualitycontroller: 0,
-						empId: qualityEmpId,
-					})
-				}
-				if (qualityEmpId) {
-					return res
-						.status(201)
-						.send(
-							writePurchase({
-								qualitySeen: false,
-								empSeen: false,
-								createDate: new Date(),
-								body: req.body,
-								uid,
-								fromEmpId: get(sessionData, 'empID'),
-								qualityEmpId,
-								qualitycontroller: 0,
-							}),
-						)
-				} else if (!qualityEmpId) {
-					return res
-						.status(404)
-						.send({ status: false, message: 'Quality Controller not found' })
-				}
-			} else {
-				return res.status(401).send()
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-	// async ItemStock(req, res, next) {
-	//     try {
-	//         const sessionId = req.cookies['B1SESSION'];
-	//         const sessionData = findSession(sessionId);
-	//         if (sessionData) {
-
-	//         }
-	//         else {
-	//             return res.status(401).send()
-	//         }
-	//     }
-	//     catch (e) {
-	//         return next(e)
-	//     }
-	// }
-	async ProductionOrders(req, res, next) {
-		try {
-			const sessionId = req.cookies['B1SESSION']
-			const sessionData = findSession(sessionId)
-			const infoNot = infoPurchase().find((item) => item.uid == uid)
-
-			if (sessionData) {
-				const qualityEmpId = infoUser().sessions.find(
-					(item) => item.jobTitle == 'qualitycontroller',
-				)?.empID
-				const uid = randomUUID()
-				if (qualityEmpId) {
-					const roomId = infoRoom().map(
-						(item) => item.empId == qualityEmpId,
-					).socket
-					const data = io
-						.to(roomId)
-						.emit('notification', {
-							qualitySeen: false,
-							empSeen: false,
-							createDate: new Date(),
-							body: req.body,
-							uid,
-							fromEmpId: get(sessionData, 'empID'),
-							qualityEmpId,
-							qualitycontroller: 0,
-							empId: qualityEmpId,
-						})
-				}
-				if (qualityEmpId) {
-					return res
-						.status(201)
-						.send(
-							writeProductionOrders({
-								qualitySeen: false,
-								empSeen: false,
-								createDate: new Date(),
-								body: req.body,
-								uid,
-								fromEmpId: get(sessionData, 'empID'),
-								qualityEmpId,
-								qualitycontroller: 0,
-							}),
-						)
-				} else if (!qualityEmpId) {
-					return res
-						.status(404)
-						.send({ status: false, message: 'Quality Controller not found' })
-				}
-			} else {
-				return res.status(401).send()
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-	async PurchaseOrdersStatus(req, res, next) {
-		try {
-			const sessionId = req.cookies['B1SESSION']
-			const sessionData = findSession(sessionId)
-			if (sessionData) {
-				const { status, job, uid, DocumentLines } = req.body
-				const infoNot = infoPurchase().find((item) => item.uid == uid)
-				if (infoNot) {
-					if (infoNot[job] == 0) {
-						if (status) {
-							updatePurchase(uid, Object.fromEntries([[job, 2]]))
-							const infoNotNew = infoPurchase().find((item) => item.uid == uid)
-							const roomId = infoRoom().map(
-								(item) => item.empId == infoNotNew.fromEmpId,
-							).socket
-
-							updatePurchase(uid, { body: { ...infoNot.body, DocumentLines } })
-							if (roomId) {
-								io.to(roomId).emit('confirmedPurchase', {
-									...infoNotNew,
-									empId: infoNotNew.fromEmpId,
-									path: 'message',
-									title: 'Поступление товаров',
-								})
-							}
-							if (infoNotNew.qualitycontroller == 2) {
-								deletePurchase(infoNotNew.uid)
-							}
-						} else {
-							const roomId = infoRoom().map(
-								(item) => item.empId == infoNot.fromEmpId,
-							).socket
-
-							updatePurchase(uid, Object.fromEntries([[job, 1]]))
-							updatePurchase(uid, { body: { ...infoNot.body, DocumentLines } })
-							const infoNotNew = infoPurchase().find((item) => item.uid == uid)
-							if (roomId) {
-								io.to(roomId).emit('notconfirmedPurchase', {
-									...infoNotNew,
-									empId: infoNot.fromEmpId,
-									path: 'message',
-									title: 'Поступление товаров',
-								})
-							}
-							deletePurchase(infoNotNew.uid)
-						}
-						return res.status(200).send()
-					} else {
-						return res.status(403).send({ message: 'Tasdiqlay olmaysiz' })
-					}
-				} else {
-					return res
-						.status(404)
-						.send({ status: false, message: 'uid Topilmadi' })
-				}
-			} else {
-				return res.status(401).send()
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-	async ProductionOrdersStatus(req, res, next) {
-		try {
-			const sessionId = req.cookies['B1SESSION']
-			const sessionData = findSession(sessionId)
-			if (sessionData) {
-				const { status, job, uid } = req.body
-				const infoNot = infoProduction().find((item) => item.uid == uid)
-				if (infoNot) {
-					if (infoNot[job] == 0) {
-						if (status) {
-							const roomId = infoRoom().map(
-								(item) => item.empId == infoNot.fromEmpId,
-							).socket
-
-							updateProduction(uid, Object.fromEntries([[job, 2]]))
-							updateProduction(uid, { body: { ...infoNot.body } })
-							const infoNotNew = infoProduction().find(
-								(item) => item.uid == uid,
-							)
-							if (roomId) {
-								io.to(roomId).emit('confirmedProduction', {
-									...infoNotNew,
-									empId: infoNotNew.fromEmpId,
-									path: 'message',
-									title: 'Поступление товаров',
-								})
-							}
-							if (infoNotNew.qualitycontroller == 2) {
-								deleteProductionOrders(infoNotNew.uid)
-							}
-						} else {
-							const room = infoRoom().map(
-								(item) => item.empId == infoNot.fromEmpId,
-							).socket
-							updateProduction(uid, Object.fromEntries([[job, 1]]))
-							updateProduction(uid, { body: { ...infoNot.body } })
-							const infoNotNew = infoProduction().find(
-								(item) => item.uid == uid,
-							)
-							if (room) {
-								io.to(room).emit('notConfirmedProduction', {
-									...infoNotNew,
-									empId: infoNotNew.fromEmpId,
-									path: 'message',
-									title: 'Поступление товаров',
-								})
-							}
-							deleteProductionOrders(infoNotNew.uid)
-						}
-						return res.status(200).send()
-					} else {
-						return res.status(403).send({ message: 'Tasdiqlay olmaysiz' })
-					}
-				} else {
-					return res
-						.status(404)
-						.send({ status: false, message: 'uid Topilmadi' })
-				}
-			} else {
-				return res.status(401).send()
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-	async PurchaseOrdersGet(req, res, next) {
-		try {
-			delete req.headers.host
-			delete req.headers['content-length']
-			const sessionId = req.cookies['B1SESSION']
-			const { skip = 0 } = req.query
-			const sessionData = findSession(sessionId)
-			if (sessionData) {
-				let notification
-				if (sessionData.jobTitle == 'wrhmanager') {
-					notification = infoPurchase()
-						.filter((item) => item?.fromEmpId == sessionData?.empID)
-						.sort((a, b) => a.empSeen - b.empSeen)
-				} else {
-					notification = infoPurchase()
-						.filter((item) => item?.qualityEmpId == sessionData?.empID)
-						.sort((a, b) => a.qualitySeen - b.qualitySeen)
-				}
-				const actNotification = notification
-				notification = notification.slice(skip, +skip + 20)
-				if (notification.length) {
-					const list =
-						sessionData.jobTitle == 'wrhmanager'
-							? notification
-									.filter((item) => item.empSeen == false)
-									.map((item) => item.uid)
-							: notification
-									.filter((item) => item.qualitySeen == false)
-									.map((item) => item.uid)
-					updatePurchaseTrue(list, sessionData.jobTitle)
-					const len = notification.length
-					const slLen = actNotification.slice(skip, +skip + 21).length
-					notification = {
-						data: notification,
-						nextPage: len != slLen ? +skip + 20 : -1,
-					}
-				}
-
-				return res.status(200).json(notification)
-			} else {
-				return res.status(401).send()
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-	async ProductionOrdersGet(req, res, next) {
-		try {
-			delete req.headers.host
-			delete req.headers['content-length']
-			const sessionId = req.cookies['B1SESSION']
-			const { skip = 0 } = req.query
-			const sessionData = findSession(sessionId)
-			if (sessionData) {
-				let notification
-				if (sessionData.jobTitle == 'prodmanager') {
-					notification = infoProduction()
-						.filter((item) => item?.fromEmpId == sessionData?.empID)
-						.sort((a, b) => a.empSeen - b.empSeen)
-				} else {
-					notification = infoProduction()
-						.filter((item) => item?.qualityEmpId == sessionData?.empID)
-						.sort((a, b) => a.qualitySeen - b.qualitySeen)
-				}
-
-				const actNotification = notification
-				notification = notification.slice(skip, +skip + 20)
-				if (notification.length) {
-					const list =
-						sessionData.jobTitle == 'prodmanager'
-							? notification
-									.filter((item) => item.empSeen == false)
-									.map((item) => item.uid)
-							: notification
-									.filter((item) => item.qualitySeen == false)
-									.map((item) => item.uid)
-					updateProductionTrue(list, sessionData.jobTitle)
-					const len = notification.length
-					const slLen = actNotification.slice(skip, +skip + 21).length
-					notification = {
-						data: notification,
-						nextPage: len != slLen ? +skip + 20 : -1,
-					}
-				}
-				return res.status(200).json(notification)
-			} else {
-				return res.status(401).send()
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-
-	async ReturnItemStock(req, res, next) {
-		try {
-			const GetItem = await GetItemStock(req, res, next)
-			if (GetItem.status) {
-				return res.status(200).json(GetItem.data)
-			} else {
-				return res.status(404).json(GetItem.message)
-			}
-		} catch (e) {
-			return next(e)
-		}
-	}
-
 	async patch(req, res, next) {
 		try {
 			const { b1Api } = req.params
@@ -699,16 +274,15 @@ class b1Controller {
 		}
 	}
 
-	async updateToken(req, res, next) {
-		try {
-			const { token, empId } = req.body
+	async updateUserLang(req, res, next){
+		try{	
+		const { lang, empId } = req.param
 
-			if (!empId || !token) {
-				return res
-					.status(409)
-					.json({ status: false, message: 'Token Or Employee Id is invalid' })
-			}
-
+		if (!empId) {
+			return res
+				.status(409)
+				.json({ status: false, message: 'Employee Id is invalid' })
+		}
 			const sessions = userJson.sessions
 
 			const session = sessions.find((item) => item.empID == empId)
@@ -718,9 +292,7 @@ class b1Controller {
 					.status(404)
 					.json({ status: false, message: 'Session not found' })
 			}
-
-			session.token = token
-
+			session.lang = lang
 			userJson.sessions = sessions
 
 			updateSessionToken(userJson)
@@ -734,6 +306,7 @@ class b1Controller {
 		}
 	}
 
+	
     async sendNotitifications(req, res, next) {
         try{
             const {empIds,messageId} = req.body;
@@ -781,5 +354,36 @@ class b1Controller {
         }
     }
 }
+
+async function updateToken (lang, token, deviceId,  empId) {
+	try {
+		console.log(lang, token, deviceId, empId)
+		if (!empId || !token || !deviceId) {
+			return 409;
+		}
+
+		const sessions = userJson.sessions
+
+		const session = sessions.find((item) => item.empID == empId)
+
+		if (!session) {
+			return 409;
+		}
+
+		session.token = token
+		session.lang = lang
+		session.deviceId = deviceId
+		session.active = true
+
+		userJson.sessions = sessions
+
+		updateSessionToken(userJson)
+
+	} catch (e) {
+		console.log('Error ' + e.message)
+		return 409;
+	}
+}
+
 
 module.exports = new b1Controller()

@@ -98,82 +98,16 @@
     "sessions": [
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "98e69dea-be94-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 12,
-            "startedAt": 1706525593550,
-            "wrh": "S1",
-            "jobTitle": "prodmanager",
-            "PurchaseOrders": 0,
-            "PurchaseInvoices": 0
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "426116e8-d240-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 6,
-            "startedAt": 1708688394021,
-            "jobTitle": "wrhmanager",
-            "PurchaseOrders": 94,
-            "PurchaseInvoices": 0
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "6d5c29ba-be8a-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 7,
-            "startedAt": 1706521225583,
-            "wrh": "01",
-            "jobTitle": "wrhmanager",
-            "PurchaseOrders": 0,
-            "PurchaseInvoices": 0
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "6213839c-be93-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 3,
-            "startedAt": 1706525072340,
-            "wrh": "A1",
-            "jobTitle": "wrhmanager",
-            "PurchaseOrders": 0,
-            "PurchaseInvoices": 0
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "3e23adf2-c0ed-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 13,
-            "startedAt": 1706783569363,
-            "token": "4546903"
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "be70a7b0-cfd1-11ee-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 5,
-            "startedAt": 1708421025208,
-            "jobTitle": "manager",
-            "PurchaseOrders": 46,
-            "PurchaseInvoices": 0,
-            "token": "4546903"
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "55f553ec-d248-11ee-8000-005056984211",
+            "SessionId": "74cba63e-0495-11ef-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 8,
-            "startedAt": 1708691862596,
+            "startedAt": 1714222544134,
             "jobTitle": "prodmanager",
-            "PurchaseOrders": 91,
-            "PurchaseInvoices": 0
+            "token": "tokeeeen",
+            "lang": "uz",
+            "deviceId": "123131",
+            "active": true
         }
     ]
 }

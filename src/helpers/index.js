@@ -340,9 +340,7 @@ function updateEmpWrh({ empID, wrh, jobTitle }) {
 		db.sessions[oldSessionI] = {
 			...db.sessions[oldSessionI],
 			wrh,
-			jobTitle,
-			PurchaseOrders: get(db.sessions[oldSessionI], 'PurchaseOrders', 0),
-			PurchaseInvoices: get(db.sessions[oldSessionI], 'PurchaseInvoices', 0),
+			jobTitle
 		}
 	}
 	fs.writeFileSync(

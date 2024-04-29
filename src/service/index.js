@@ -1,33 +1,53 @@
-const OneSignal = require('@onesignal/node-onesignal');
 const {config} =require("../config/index");
+const axios = require('axios');
 
-async function sendNotification(userKey,contentData){
-    try{
-        console.log("Notification is started")
-        const configuration = OneSignal.createConfiguration({
-            userKey,
-            appKey: config.ONE_SINGAL_APP_KEY
-        });
+async function sendNotification(userKey, contentData) {
+    try {
+        const url = 'https://onesignal.com/api/v1/notifications';
+        const API_KEY = config.ONE_SINGAL_APP_KEY; 
 
-        const client = new OneSignal.DefaultApi(configuration);
+        console.log("APP_KEY: " + config.ONE_SINGAL_APP_KEY + "\n" + "APP_ID: " + config.ONE_SIGNAL_APP_ID)
+        const headers = {
+            'Authorization': `Basic ${API_KEY}`,
+            'content-type': 'application/json'
+        };
 
-        const app = await client.getApp(config.ONE_SIGNAL_APP_ID);
+        console.log("header -> ")
+        console.log(JSON.stringify(headers, 2))
+        const data = {
+            app_id: config.ONE_SIGNAL_APP_ID, 
+            include_aliases: {
+                external_id: [userKey]
+            },
+            target_channel: 'push',
+            data: {
+                foo: contentData
+            },
+            contents: {
+                en: "JSON.stringify(contentData)"
+            },
+            headings: {
+                en: 'Test'
+            }
+        };
 
-        const notification = new OneSignal.Notification();
+        console.log(JSON.stringify(data, 2))
 
-        notification.app_id = app.id;
+        // const response = await axios.post(url, data, { headers });
+        await axios.post(url, data, { headers }).then(a=>{
+        console.log("Response must start here")
+            console.log(a.data)
+        })
 
-        notification.name = "Test Notification";
+        // console.log(JSON.stringify(response,null, 2))
+    
+        if (response.status !== 200) {
+            return { code: response.code, status: false, message: 'Error in sending notification' };
+        }
 
-        notification.contents = contentData
-
-        notification.headings = `Notification Title`
-
-        const notificationResponse = await client.createNotification(notification);
-
-        return notificationResponse.errors;
-    }catch(error){
-        console.log("Error in sendNotification",error.message)
+        return { status: true, message: 'Notification sent successfully' };
+    } catch (error) {
+        return { status: false, message: 'Error in sending notification' };
     }
 }
 
