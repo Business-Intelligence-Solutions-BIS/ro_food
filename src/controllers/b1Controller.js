@@ -276,7 +276,7 @@ class b1Controller {
 
 	async updateUserLang(req, res, next){
 		try{	
-		const { lang, empId } = req.param
+		const { lang, empId } = req.body;
 
 		if (!empId) {
 			return res
@@ -299,7 +299,7 @@ class b1Controller {
 
 			return res
 				.status(200)
-				.json({ status: true, message: 'Token saved successfully' })
+				.json({ status: true, message: 'Language updated successfully' })
 		} catch (e) {
 			console.log('Error ' + e.message)
 			return next(e)
@@ -334,9 +334,9 @@ class b1Controller {
                         .status(404)
                         .json({ status: false, message: 'Message not found' })
                 }
-				
-				const title = ''
-				const body = ''
+
+				let title = ''
+				let body = ''
 				const lang = session.lang; 
 				if(lang === 'en'){
 					title = message.content.en.header
@@ -349,7 +349,7 @@ class b1Controller {
 					body = message.content.uz.body
 				}
 
-                const notificationResponse = await sendNotification(session.token, message.content)
+                const notificationResponse = await sendNotification(session.token, title, body)
 
                 if(!notificationResponse){
                     return res

@@ -4,16 +4,16 @@
             "id":1000,
             "content":{
                 "en":{
-                    "body":"Hello World",
-                    "header":"Hello World"
+                    "body":"User Request",
+                    "header":"Your request is accepted"
                 },
                 "ru":{
-                    "body":"Hello World",
-                    "header":"Hello World"
+                    "body":"Запрос пользователя",
+                    "header":"Ваш запрос принят"
                 },
                 "uz":{
-                    "body":"Hello World",
-                    "header":"Hello World"
+                    "body":"Foydalanuvchi so'rovi",
+                    "header":"Sizning so'rovingiz qabul qilindi"
                 }
             }
         }

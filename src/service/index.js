@@ -6,14 +6,11 @@ async function sendNotification(userKey, title, body) {
         const url = 'https://onesignal.com/api/v1/notifications';
         const API_KEY = config.ONE_SINGAL_APP_KEY; 
 
-        console.log("APP_KEY: " + config.ONE_SINGAL_APP_KEY + "\n" + "APP_ID: " + config.ONE_SIGNAL_APP_ID)
         const headers = {
             'Authorization': `Basic ${API_KEY}`,
             'content-type': 'application/json'
         };
 
-        console.log("header -> ")
-        console.log(JSON.stringify(headers, 2))
         const data = {
             app_id: config.ONE_SIGNAL_APP_ID, 
             include_aliases: {
@@ -28,12 +25,8 @@ async function sendNotification(userKey, title, body) {
             }
         };
 
-        console.log(JSON.stringify(data, 2))
-
         // const response = await axios.post(url, data, { headers });
         await axios.post(url, data, { headers }).then(a=>{
-        console.log("Response must start here")
-            console.log(a.data)
         })
 
         // console.log(JSON.stringify(response,null, 2))

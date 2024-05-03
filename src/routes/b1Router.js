@@ -10,6 +10,10 @@ router.get('/api/test', b1Controller.test)
 router.post('/api/login', b1Controller.login)
 //-------------------------------------------
 
+// ***** update lang *****
+router.post('/api/update-lang', b1Controller.updateUserLang)
+//----------------------------------------------
+
 //***** user data get qilish uchun *****
 router.get('/api/userData', customController.userData)
 router.get('/api/web/userData', customController.webUserData)
@@ -17,7 +21,7 @@ router.get('/api/web/userData', customController.webUserData)
 
 //***** notification uchun *****
 // router.post('/api/token', b1Controller.updateToken)
-router.post('/api/sendNotification', b1Controller.sendNotitifications)
+router.post('/api/send-notification', b1Controller.sendNotitifications)
 //-------------------------------------------
 
 //*****mobildagi skladdagi mahsulotlarni gurpa bo'yicha filter  *****
