@@ -1,7 +1,7 @@
 const {config} =require("../config/index");
 const axios = require('axios');
 
-async function sendNotification(userKey, contentData) {
+async function sendNotification(userKey, title, body) {
     try {
         const url = 'https://onesignal.com/api/v1/notifications';
         const API_KEY = config.ONE_SINGAL_APP_KEY; 
@@ -20,14 +20,11 @@ async function sendNotification(userKey, contentData) {
                 external_id: [userKey]
             },
             target_channel: 'push',
-            data: {
-                foo: contentData
-            },
             contents: {
-                en: "JSON.stringify(contentData)"
+                en: body
             },
             headings: {
-                en: 'Test'
+                en: title
             }
         };
 

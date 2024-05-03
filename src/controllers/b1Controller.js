@@ -39,7 +39,7 @@ const fs = require('fs')
 class b1Controller {
 	async test(req, res, next) {
 		try {
-			return res.status(201).json('Assalomu Aleykum')
+			return res.status(201).json('Assalamu Alaykum')
 		} catch (e) {
 			return next(e)
 		}
@@ -306,7 +306,6 @@ class b1Controller {
 		}
 	}
 
-	
     async sendNotitifications(req, res, next) {
         try{
             const {empIds,messageId} = req.body;
@@ -335,8 +334,22 @@ class b1Controller {
                         .status(404)
                         .json({ status: false, message: 'Message not found' })
                 }
+				
+				const title = ''
+				const body = ''
+				const lang = session.lang; 
+				if(lang === 'en'){
+					title = message.content.en.header
+					body = message.content.en.body
+				} else if(lang === 'ru'){
+					title = message.content.ru.header
+					body = message.content.ru.body
+				}else{
+					title = message.content.uz.header
+					body = message.content.uz.body
+				}
 
-                const notificationResponse = await sendNotification(session.token,message.content)
+                const notificationResponse = await sendNotification(session.token, message.content)
 
                 if(!notificationResponse){
                     return res
