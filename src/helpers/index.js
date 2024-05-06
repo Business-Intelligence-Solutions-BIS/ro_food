@@ -1,4 +1,3 @@
-const { count } = require('console')
 const fs = require('fs')
 const { get } = require('lodash')
 const path = require('path')
@@ -11,7 +10,7 @@ function writeUser(userData) {
 	)
 }
 
-function updateSessionToken(userData) {
+async function updateSessionToken(userData) {
 	fs.writeFileSync(
 		path.join(process.cwd(), 'database', 'user.json'),
 		JSON.stringify(userData, null, 4),
@@ -312,7 +311,7 @@ function getUPermissionsBySession(sessionId) {
 	return findUserPermissions(session.empID)
 }
 
-function saveSession(session) {
+async function saveSession(session) {
 	const db = infoUser()
 
 	const oldSessionI = db.sessions.findIndex(

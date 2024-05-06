@@ -1,40 +1,16 @@
 const Axios = require('axios')
 const https = require('https')
 const { get } = require('lodash')
-const { io, socket, socketIo } = require('../config')
-const { CREDENTIALS } = require('../credentials')
 const {
 	saveSession,
-	writeRoom,
-	writeTransferRequest,
 	findSession,
-	infoRoom,
-	infoUser,
-	writePurchase,
-	infoPurchase,
-	updatePurchase,
-	updatePurchaseTrue,
 	updateEmp,
-	deletePurchase,
-	infoProduction,
-	updateProductionTrue,
-	deleteProductionOrders,
-	updateProduction,
-	writeProductionOrders,
-	updateUser,
 	updateSessionToken,
 } = require('../helpers')
 const CustomController = require('./customController')
-const Controller = require('./customController')
-const ShortUniqueId = require('short-unique-id')
-const customController = require('./customController')
-const { GetItemStock } = require('./customController')
-const { stat } = require('fs')
-const { randomUUID } = new ShortUniqueId({ length: 10 })
 const userJson = require('../../database/user.json')
 const messageJson = require('../../database/message.json')
 const {sendNotification, sendNotification1} = require('../service/index')
-const fs = require('fs')
 
 class b1Controller {
 	async test(req, res, next) {
@@ -64,10 +40,14 @@ class b1Controller {
 				ret.headers['set-cookie'][0] += '; Path=/'
 			}
 
-			saveSession({
+			await saveSession({
 				...ret.data,
 				empID: ret.userData.EmployeeID,
 				startedAt: new Date().valueOf(),
+				token: token,
+				lang: lang,
+				deviceId: deviceId,
+				active: true
 			})
 
 			res.set({
@@ -81,17 +61,6 @@ class b1Controller {
 			    return res.status(400).json({ status: false, message: "Bad request" });
 			}else{
 				userData.sessionId = ret.data.SessionId
-
-				console.log(JSON.stringify(userData, 2))
-				console.log(lang, token, deviceId)
-
-				const upToken = await updateToken(lang, token, deviceId, userData.EmployeesInfo.EmployeeID)
-
-				if(upToken === 409){
-					return res
-					.status(409)
-					.json({ status: false, message: 'Check properties(lang, token, deviceId)' })
-				}
 
 				return res
 				.status(ret.status)
@@ -301,7 +270,6 @@ class b1Controller {
 				.status(200)
 				.json({ status: true, message: 'Language updated successfully' })
 		} catch (e) {
-			console.log('Error ' + e.message)
 			return next(e)
 		}
 	}
@@ -367,36 +335,5 @@ class b1Controller {
         }
     }
 }
-
-async function updateToken (lang, token, deviceId,  empId) {
-	try {
-		console.log(lang, token, deviceId, empId)
-		if (!empId || !token || !deviceId) {
-			return 409;
-		}
-
-		const sessions = userJson.sessions
-
-		const session = sessions.find((item) => item.empID == empId)
-
-		if (!session) {
-			return 409;
-		}
-
-		session.token = token
-		session.lang = lang
-		session.deviceId = deviceId
-		session.active = true
-
-		userJson.sessions = sessions
-
-		updateSessionToken(userJson)
-
-	} catch (e) {
-		console.log('Error ' + e.message)
-		return 409;
-	}
-}
-
 
 module.exports = new b1Controller()

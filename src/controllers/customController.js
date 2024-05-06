@@ -3,17 +3,9 @@ const Axios = require('axios')
 const https = require('https')
 const {
 	findSession,
-	findUserPermissions,
 	updateEmpWrh,
-	infoNotification,
-	infoMessage,
-	infoPurchase,
-	infoProduction,
-	saveSession,
-	deleteSession,
 } = require('../helpers')
 const { get, groupBy } = require('lodash')
-const { setEngine } = require('crypto')
 
 class CustomController {
 
