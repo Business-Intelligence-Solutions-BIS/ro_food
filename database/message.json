@@ -4,16 +4,16 @@
             "id":1000,
             "content":{
                 "en":{
-                    "body":"User Request",
-                    "header":"Your request is accepted"
+                    "header":"User Request",
+                    "body":"Your request is accepted"
                 },
                 "ru":{
-                    "body":"Запрос пользователя",
-                    "header":"Ваш запрос принят"
+                    "header":"Запрос пользователя",
+                    "body":"Ваш запрос принят"
                 },
                 "uz":{
-                    "body":"Foydalanuvchi so'rovi",
-                    "header":"Sizning so'rovingiz qabul qilindi"
+                    "header":"Foydalanuvchi so'rovi",
+                    "body":"Sizning so'rovingiz qabul qilindi"
                 }
             }
         }

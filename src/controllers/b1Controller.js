@@ -10,7 +10,7 @@ const {
 const CustomController = require('./customController')
 const userJson = require('../../database/user.json')
 const messageJson = require('../../database/message.json')
-const {sendNotification, sendNotification1} = require('../service/index')
+const {sendNotification, sendNotification1} = require('../service/notificationService')
 
 class b1Controller {
 	async test(req, res, next) {
@@ -252,19 +252,21 @@ class b1Controller {
 				.status(409)
 				.json({ status: false, message: 'Employee Id is invalid' })
 		}
-			const sessions = userJson.sessions
+			const sessions = [...userJson.sessions];
+			// const sessions = userJson.sessions
 
-			const session = sessions.find((item) => item.empID == empId)
+			const sessionIndex = sessions.findIndex((item) => item.empID == empId);
 
-			if (!session) {
+			if (sessionIndex === -1) {
 				return res
 					.status(404)
-					.json({ status: false, message: 'Session not found' })
+					.json({ status: false, message: 'Session not found' });
 			}
-			session.lang = lang
-			userJson.sessions = sessions
 
-			updateSessionToken(userJson)
+			sessions[sessionIndex].lang = lang;
+        	userJson.sessions = sessions;
+
+			await updateSessionToken(userJson)
 
 			return res
 				.status(200)
@@ -273,7 +275,6 @@ class b1Controller {
 			return next(e)
 		}
 	}
-
     async sendNotitifications(req, res, next) {
         try{
             const {empIds,messageId} = req.body;
@@ -322,12 +323,12 @@ class b1Controller {
                 if(!notificationResponse){
                     return res
                         .status(409)
-                        .json({ status: false, message: 'Error in sending notification' })
+                        .json({ status: notificationResponse.status, code: notificationResponse.code, message: notificationResponse.message })
                 }
                 
                 return res
                     .status(200)
-                    .json({ status: true, message: 'Notification sent successfully' })
+                    .json({ status: notificationResponse.status, code: notificationResponse.code, message: notificationResponse.message })
             }
         }catch(e){
             console.log('Error ' + e.message)

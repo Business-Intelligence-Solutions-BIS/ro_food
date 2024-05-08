@@ -1,4 +1,4 @@
-const {config} =require("../config/index");
+const {config} =require("../configs/index");
 const axios = require('axios');
 
 async function sendNotification(userKey, title, body) {
@@ -26,18 +26,15 @@ async function sendNotification(userKey, title, body) {
         };
 
         // const response = await axios.post(url, data, { headers });
-        await axios.post(url, data, { headers }).then(a=>{
-        })
+        const response = await axios.post(url, data, { headers });
 
-        // console.log(JSON.stringify(response,null, 2))
-    
         if (response.status !== 200) {
-            return { code: response.code, status: false, message: 'Error in sending notification' };
+            return { status: false, code: response.status, message: 'Error in sending notification' };
         }
 
-        return { status: true, message: 'Notification sent successfully' };
+        return { status: true, code: response.status, message: 'Notification sent successfully' };
     } catch (error) {
-        return { status: false, message: 'Error in sending notification' };
+        return { status: false, code: 500, message: 'Error in sending notification' };
     }
 }
 

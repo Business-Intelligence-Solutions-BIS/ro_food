@@ -104,7 +104,7 @@
             "empID": 8,
             "startedAt": 1714916359317,
             "token": "264efb5a-1c21-4346-9b30-0dd4a0cd3037",
-            "lang": "uz",
+            "lang": "en",
             "deviceId": "123131",
             "active": true
         },
@@ -115,7 +115,7 @@
             "SessionTimeout": 1500,
             "empID": 6,
             "startedAt": 1714916375120,
-            "token": "264efb5a-1c21-4346-9b30-0dd4a0cd3037",
+            "token": "f2bd6e9c-e7c4-462a-940a-8f036b33b672",
             "lang": "uz",
             "deviceId": "123131",
             "active": true
