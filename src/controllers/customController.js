@@ -115,10 +115,13 @@ class CustomController {
 		try {
 			const sessionData = findSession(sessionId)
 			if (!sessionData) {
-				return 401;
+				return 409;
 			}
 			try {
 				const ret = await this.getUserBranchInfo(sessionData)
+				if (ret.data.value[0].EmployeesInfo.JobTitle !== "wrhmanager") {
+					return 401;
+				   }
 				updateEmpWrh({
 					empID: get(ret, 'EmployeesInfo.EmployeeID'),
 					wrh: get(ret, 'CustomBranches.U_Warehouse'),
@@ -148,40 +151,63 @@ class CustomController {
 		return replydv
 	}
 
-	webUserData = async (req, res, next) => {
+	webUserData = async (sessionId) => {
 		try {
-			const sessionId = req.cookies['B1SESSION']
 			const sessionData = findSession(sessionId)
 			if (!sessionData) {
-				return res
-				.status(401)
-				.json({status: false, message: "Session is not found"})
+				return 409;
 			}
-
 			try {
-				const ret = await this.getUserInfo(req, sessionData)
-
-				// if (ret.EmployeesInfo.JobTitle !== "prodmanager") {
-				//  res.status(403).json({
-				//     status: 403,
-				//     data: "You do not have permission",
-				//     });
-				//     return;
-				// }
+				const ret = await this.getUserBranchInfo(sessionData)
+				if (ret.data.value[0].EmployeesInfo.JobTitle !== "prodmanager") {
+				 return 401;
+				}
 				updateEmpWrh({
 					empID: get(ret, 'EmployeesInfo.EmployeeID'),
 					wrh: get(ret, 'CustomBranches.U_Warehouse'),
 					jobTitle: get(ret, 'EmployeesInfo.JobTitle'),
 				})
-				return res.status(200).json(ret)
+				return {...ret.data.value[0]};
 			} catch (err) {
-				return res
-					.status(err?.response?.status || 400)
-					.json(err?.response?.data || err)
+				console.log(err.message)
 			}
 		} catch (e) {
-			return next(e)
+			console.log(e.message)
 		}
+
+		// try {
+		// 	const sessionId = req.cookies['B1SESSION']
+		// 	const sessionData = findSession(sessionId)
+		// 	if (!sessionData) {
+		// 		return res
+		// 		.status(401)
+		// 		.json({status: false, message: "Session is not found"})
+		// 	}
+
+		// 	try {
+		// 		const ret = await this.getUserInfo(req, sessionData)
+
+		// 		// if (ret.EmployeesInfo.JobTitle !== "prodmanager") {
+		// 		//  res.status(403).json({
+		// 		//     status: 403,
+		// 		//     data: "You do not have permission",
+		// 		//     });
+		// 		//     return;
+		// 		// }
+		// 		updateEmpWrh({
+		// 			empID: get(ret, 'EmployeesInfo.EmployeeID'),
+		// 			wrh: get(ret, 'CustomBranches.U_Warehouse'),
+		// 			jobTitle: get(ret, 'EmployeesInfo.JobTitle'),
+		// 		})
+		// 		return res.status(200).json(ret)
+		// 	} catch (err) {
+		// 		return res
+		// 			.status(err?.response?.status || 400)
+		// 			.json(err?.response?.data || err)
+		// 	}
+		// } catch (e) {
+		// 	return next(e)
+		// }
 	}
 }
 

@@ -47,7 +47,8 @@ class b1Controller {
 				token: token,
 				lang: lang,
 				deviceId: deviceId,
-				active: true
+				active: true,
+				isWeb: false
 			})
 
 			res.set({
@@ -55,11 +56,67 @@ class b1Controller {
 			})
 			const userData = await CustomController.userData(ret.data.SessionId);
 
-			if (!userData || userData === 401) {
+			if (!userData || userData === 409) {
     			return res.status(401).json({ status: false, message: "Session is not found" });
 			} else if (userData === 400) {
 			    return res.status(400).json({ status: false, message: "Bad request" });
+			}else if(userData === 401){
+				return res
+				.status(401)
+				.json({status: false, message: "You do not have permission web page"})	
 			}else{
+				userData.sessionId = ret.data.SessionId
+
+				return res
+				.status(ret.status)
+				.json(userData)
+			}
+		} catch (e) {
+			return next(e)
+		}
+	}
+
+	async webLogin(req, res, next) {
+		try {
+			delete req.headers.host
+			delete req.headers['content-length']
+			const ret = await CustomController.uiLogin(req.body)
+
+			if (ret.status !== 200 && ret.status !== 201) {
+				return res.status(ret.status || 400).send({
+					error: {
+						message: ret.data,
+					},
+				})
+			}
+
+			if (ret.headers['set-cookie'] && ret.headers['set-cookie'][0]) {
+				ret.headers['set-cookie'][0] += '; Path=/'
+			}
+
+			await saveSession({
+				...ret.data,
+				empID: ret.userData.EmployeeID,
+				startedAt: new Date().valueOf(),
+				active: true,
+				isWeb: true
+			})
+
+			res.set({
+				...ret.headers,
+			})
+			const userData = await CustomController.webUserData(ret.data.SessionId);
+
+			if (!userData || userData === 409) {
+    			return res.status(401).json({ status: false, message: "Session is not found" });
+			} else if (userData === 400) {
+			    return res.status(400).json({ status: false, message: "Bad request" });
+			}else if(userData === 401){
+				return res
+				.status(401)
+				.json({status: false, message: "You do not have permission web page"})	
+			}
+			else{
 				userData.sessionId = ret.data.SessionId
 
 				return res
@@ -75,7 +132,7 @@ class b1Controller {
 		try {
 			// Extracting query parameters
 			const {
-				ParentGroup,
+				ParentGroup, 
 				ItemCode,
 				ItemName,
 				SubGroup,
@@ -289,6 +346,13 @@ class b1Controller {
                 const sessions = userJson.sessions
 
                 const session = sessions.find((item) => item.empID == empId)
+
+				
+				if(session.isWeb === true){
+					return res
+					.status(409)
+					.json({ status: false, message: 'Cannot send notification for web user' })
+				}
 
                 if (!session || !session.token) {
                     return res

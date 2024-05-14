@@ -8,16 +8,12 @@ router.get('/api/test', b1Controller.test)
 
 //***** login *****
 router.post('/api/login', b1Controller.login)
+router.post('/api/web/login', b1Controller.webLogin)
 //-------------------------------------------
 
 // ***** update lang *****
 router.post('/api/update-lang', b1Controller.updateUserLang)
 //----------------------------------------------
-
-//***** user data get qilish uchun *****
-router.get('/api/userData', customController.userData)
-router.get('/api/web/userData', customController.webUserData)
-//--------------------------------------------
 
 //***** notification uchun *****
 // router.post('/api/token', b1Controller.updateToken)
