@@ -22,6 +22,7 @@ router.post('/api/send-notification', b1Controller.sendNotitifications)
 
 //*****mobildagi skladdagi mahsulotlarni gurpa bo'yicha filter  *****
 router.get('/api/getItemsByGroups', b1Controller.getItemsByGroups)
+router.get('/api/out-in-payments', b1Controller.getOutAnInPaymentDetails)
 //--------------------------------------------
 
 ////***** sapga backend orqali zapros berish *****

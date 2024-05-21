@@ -78,6 +78,8 @@ class b1Controller {
 
 	async webLogin(req, res, next) {
 		try {
+			const {lang} = req.body;
+
 			delete req.headers.host
 			delete req.headers['content-length']
 			const ret = await CustomController.uiLogin(req.body)
@@ -131,25 +133,38 @@ class b1Controller {
 	async getItemsByGroups(req, res, next) {
 		try {
 			// Extracting query parameters
-			const {
+			let {
 				ParentGroup, 
 				ItemCode,
 				ItemName,
 				SubGroup,
 				SubSubGroup,
-				maxpagesize = 10,
-			} = req.query
-
+				maxpagesize,
+				skip
+			} = req.query;
+	
+			// Validating skip parameter
+			if (skip === undefined || skip === null || isNaN(skip) || skip < 0) {
+				skip = 0;
+			}
+	
+			// Validating maxpagesize parameter
+			if (maxpagesize === undefined || maxpagesize === null || isNaN(maxpagesize) || maxpagesize < 10) {
+				maxpagesize = 10;
+			}
+	
 			// Constructing the URL with query parameters
-			let url =
-				'https://su26-02.sb1.cloud:4300/RoFood/app.xsjs/getItemsByGroups?'
-			if (ParentGroup) url += `ParentGroup=${ParentGroup}&`
-			if (ItemCode) url += `ItemCode=${ItemCode}&`
-			if (ItemName) url += `ItemName=%25${ItemName}%25&` // Encoding the ItemName
-			if (SubGroup) url += `SubGroup=${SubGroup}&`
-			if (SubSubGroup) url += `SubSubGroup=${SubSubGroup}&`
-			url = url.slice(0, -1) // Remove the trailing '&' if present
-
+			let url = 'https://su26-02.sb1.cloud:4300/rofood-prod/app.xsjs/getItemsByGroups?';
+			if (ParentGroup) url += `ParentGroup=${encodeURIComponent(ParentGroup)}&`;
+			if (ItemCode) url += `ItemCode=${encodeURIComponent(ItemCode)}&`;
+			if (ItemName) url += `ItemName=%25${encodeURIComponent(ItemName)}%25&`; // Encoding the ItemName with wildcards
+			if (SubGroup) url += `SubGroup=${encodeURIComponent(SubGroup)}&`;
+			if (SubSubGroup) url += `SubSubGroup=${encodeURIComponent(SubSubGroup)}&`;
+			if (skip !== undefined) url += `$skip=${skip}&`;
+	
+			// Remove the trailing '&' if present
+			url = url.endsWith('&') ? url.slice(0, -1) : url;
+	
 			const config = {
 				method: 'get',
 				url,
@@ -160,17 +175,65 @@ class b1Controller {
 					username: 'llc_res_su26_adm',
 					password: 'Kiw1bEW0P354',
 				},
-			}
-
+			};
+	
 			// Making the request
-			const response = await Axios(config)
-
+			const response = await Axios(config);
+	
 			// Returning the data received from the API
-			res.status(200).json(response.data)
+			res.status(200).json(response.data);
 		} catch (error) {
-			next(error)
+			// Handle errors and return JSON response
+			res.status(500).json({ error: error.message });
 		}
 	}
+	
+
+	async getOutAnInPaymentDetails(req, res, next) {
+		try {
+			// Extracting query parameters
+			let { skip, maxpagesize } = req.query;
+	
+			// Validating skip parameter
+			if (skip === undefined || skip === null || isNaN(skip) || skip < 0) {
+				skip = 0;
+			}
+	
+			// Validating maxpagesize parameter
+			if (maxpagesize === undefined || maxpagesize === null || isNaN(maxpagesize) || maxpagesize < 10) {
+				maxpagesize = 10;
+			}
+	
+			// Constructing the URL with query parameters
+			let url = 'https://su26-02.sb1.cloud:4300/rofood-prod/app.xsjs/getOutAndInPayDetails?';
+			if (skip) {
+				url += `$skip=${skip}&`;
+			}
+	
+			// Removing the trailing '&' if present
+			url = url.endsWith('&') ? url.slice(0, -1) : url;
+	
+			const config = {
+				method: 'get',
+				url,
+				headers: {
+					Prefer: 'odata.maxpagesize=' + maxpagesize,
+				},
+				auth: {
+					username: 'llc_res_su26_adm',
+					password: 'Kiw1bEW0P354',
+				},
+			};
+	
+			// Making the request
+			const response = await Axios(config);
+	
+			// Returning the data received from the API
+			res.status(200).json(response.data);
+		} catch (error) {
+			res.status(500).json({ error: error.message });
+		}
+	}	
 
 	async get(req, res, next) {
 		try {
