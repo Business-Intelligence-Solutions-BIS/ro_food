@@ -11,6 +11,7 @@ const CustomController = require('./customController')
 const userJson = require('../../database/user.json')
 const messageJson = require('../../database/message.json')
 const {sendNotification, sendNotification1} = require('../service/notificationService')
+const { installmentsCredentials, xsEngineMainFile } = require('../credentials')
 
 class b1Controller {
 	async test(req, res, next) {
@@ -461,6 +462,82 @@ class b1Controller {
             console.log('Error ' + e.message)
             return next(e)
         }
+    }
+
+	async xsSql(req, res, next) {
+        const sessionId = req.cookies['B1SESSION'];
+        const sessionData = findSession(sessionId);
+        
+        if (!sessionData) {
+            return res.status(401).send({
+                "error": "Not authorized."
+            });
+        }
+        
+        const urlParams = new URLSearchParams({
+            ...req.query,
+            db: installmentsCredentials.CompanyDB
+        });
+        
+        const url = xsEngineMainFile + "/" + req.params.xsFuncName + '?' + urlParams;
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                'Prefer': req.get('Prefer') || 'odata.maxpagesize=20'
+            },
+            auth: {  // TODO: username va pass noto'gri bo'lsa error handling
+                username: installmentsCredentials.UserName,
+                password: installmentsCredentials.Password
+            }
+        };
+        
+        try {
+            const resp = await Axios.get(url, config);
+            // res.status(200).send(resp.data);
+        
+            if (!resp.headers['content-type'].includes('application/json')) {
+                throw {
+                    status: resp.status,
+                    message: resp.data
+                };
+            }
+        
+            if (resp.status !== 200) {
+                throw {
+                    status: resp.status,
+                    message: resp.data
+                };
+            }
+        
+            const resData = patchXsResponse(resp.data, req.baseUrl + req.path);
+        
+            return res.status(200).send(resData);
+        } catch (e) {
+            return res.status(e?.response?.status || 400).send({
+                message: e?.response?.message || e.message || e  // TODO: 404 bo'lganida response.data.message ko'rsatmayapti
+                // TODO: umuman olganda error handling haqida o'ylab ko'rsa bo'ladi
+            });
+        }
+    }
+}
+
+function patchXsResponse(data, baseUrl) {
+    if (!data || !data["@odata.nextLink"]) {
+        return data
+    }
+
+    const queryString = data["@odata.nextLink"].split('?')[1];
+
+    if (!queryString) {
+        return data
+    }
+
+    const urlParams = new URLSearchParams(queryString);
+    urlParams.delete('db');
+
+    return {
+        ...data,
+        ["@odata.nextLink"]: baseUrl + "?" + urlParams
     }
 }
 

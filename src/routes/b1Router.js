@@ -25,6 +25,10 @@ router.get('/api/getItemsByGroups', b1Controller.getItemsByGroups)
 router.get('/api/out-in-payments', b1Controller.getOutAnInPaymentDetails)
 //--------------------------------------------
 
+//***** XS SQL ishga tushirish *****
+router.get('/api/xsSql/:xsFuncName', b1Controller.xsSql)
+//--------------------------------------------
+
 ////***** sapga backend orqali zapros berish *****
 router.get('/ServiceLayer/b1s/v2/:b1Api', b1Controller.get)
 router.post('/ServiceLayer/b1s/v2/:b1Api', b1Controller.post)
