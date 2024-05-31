@@ -12,7 +12,9 @@ const config = {
     SAP_PASSWORD_PROD: process.env.SAP_PASSWORD_PROD,
     SAP_COMPANY_DB_DEV: process.env.SAP_COMPANY_DB_DEV,
     SAP_USERNAME_DEV: process.env.SAP_USERNAME_DEV,
-    SAP_PASSWORD_DEV: process.env.SAP_PASSWORD_DEV
+    SAP_PASSWORD_DEV: process.env.SAP_PASSWORD_DEV,
+    HANA_USER_NAME: process.env.HANA_USER_NAME,
+    HANA_PASSWORD: process.env.HANA_PASSWORD
 }
 
 module.exports = {config}

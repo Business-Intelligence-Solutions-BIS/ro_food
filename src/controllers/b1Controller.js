@@ -1,6 +1,7 @@
 const Axios = require('axios')
 const https = require('https')
 const { get } = require('lodash')
+const {config: configEnv} =require("../configs/index");
 const {
 	saveSession,
 	findSession,
@@ -173,8 +174,8 @@ class b1Controller {
 					Prefer: 'odata.maxpagesize=' + maxpagesize,
 				},
 				auth: {
-					username: 'llc_res_su26_adm',
-					password: 'Kiw1bEW0P354',
+					username: configEnv.HANA_USER_NAME,
+					password: configEnv.HANA_PASSWORD,
 				},
 			};
 	
@@ -221,8 +222,8 @@ class b1Controller {
 					Prefer: 'odata.maxpagesize=' + maxpagesize,
 				},
 				auth: {
-					username: 'llc_res_su26_adm',
-					password: 'Kiw1bEW0P354',
+					username: configEnv.HANA_USER_NAME,
+					password: configEnv.HANA_PASSWORD,
 				},
 			};
 	
