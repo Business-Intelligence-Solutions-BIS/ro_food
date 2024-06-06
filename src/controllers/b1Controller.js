@@ -12,7 +12,7 @@ const CustomController = require('./customController')
 const userJson = require('../../database/user.json')
 const messageJson = require('../../database/message.json')
 const {sendNotification, sendNotification1} = require('../service/notificationService')
-const { installmentsCredentials, xsEngineMainFile } = require('../credentials')
+const { xsEngineCredentials, xsEngineMainFileProd } = require('../credentials')
 
 class b1Controller {
 	async test(req, res, next) {
@@ -477,18 +477,18 @@ class b1Controller {
         
         const urlParams = new URLSearchParams({
             ...req.query,
-            db: installmentsCredentials.CompanyDB
+            db: xsEngineCredentials.CompanyDB
         });
         
-        const url = xsEngineMainFile + "/" + req.params.xsFuncName + '?' + urlParams;
+        const url = xsEngineMainFileProd + "/" + req.params.xsFuncName + '?' + urlParams;
         const config = {
             headers: {
                 'Content-Type': 'application/json',
                 'Prefer': req.get('Prefer') || 'odata.maxpagesize=20'
             },
             auth: {  // TODO: username va pass noto'gri bo'lsa error handling
-                username: installmentsCredentials.UserName,
-                password: installmentsCredentials.Password
+                username: xsEngineCredentials.UserName,
+                password: xsEngineCredentials.Password
             }
         };
         

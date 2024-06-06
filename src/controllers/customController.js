@@ -127,7 +127,8 @@ class CustomController {
 					wrh: get(ret, 'CustomBranches.U_Warehouse'),
 					jobTitle: get(ret, 'EmployeesInfo.JobTitle'),
 				})
-				return {...ret.data.value[0]};
+				const dataEmp = ret.data.value[0]
+				return dataEmp;
 			} catch (err) {
 				console.log(err.message)
 			}
@@ -135,22 +136,6 @@ class CustomController {
 			console.log(e.message)
 		}
 	}
-
-	getUserBranchInfo = async (session) => {
-		const config = {
-			httpsAgent: new https.Agent({
-				rejectUnauthorized: false,
-			}),
-			headers: {
-				Cookie: `B1SESSION=${session.SessionId}; ROUTEID=.node2`
-			},
-		}
-		const url = 'https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/$crossjoin(EmployeesInfo, skladlar_obyekt)?$expand=EmployeesInfo($select=EmployeeID,FirstName,LastName,SalesPersonCode,JobTitle),skladlar_obyekt($select=U_Sklad_udt,)&$filter=EmployeesInfo/U_Sklad eq skladlar_obyekt/DocEntry and EmployeesInfo/EmployeeID eq ' +
-		session.empID
-		const replydv = await Axios.get(url, config)
-		return replydv
-	}
-
 	webUserData = async (sessionId) => {
 		try {
 			const sessionData = findSession(sessionId)
@@ -167,47 +152,29 @@ class CustomController {
 					wrh: get(ret, 'CustomBranches.U_Warehouse'),
 					jobTitle: get(ret, 'EmployeesInfo.JobTitle'),
 				})
-				return {...ret.data.value[0]};
+				const dataEmp = ret.data.value[0]
+				return dataEmp;
 			} catch (err) {
 				console.log(err.message)
 			}
 		} catch (e) {
 			console.log(e.message)
 		}
-
-		// try {
-		// 	const sessionId = req.cookies['B1SESSION']
-		// 	const sessionData = findSession(sessionId)
-		// 	if (!sessionData) {
-		// 		return res
-		// 		.status(401)
-		// 		.json({status: false, message: "Session is not found"})
-		// 	}
-
-		// 	try {
-		// 		const ret = await this.getUserInfo(req, sessionData)
-
-		// 		// if (ret.EmployeesInfo.JobTitle !== "prodmanager") {
-		// 		//  res.status(403).json({
-		// 		//     status: 403,
-		// 		//     data: "You do not have permission",
-		// 		//     });
-		// 		//     return;
-		// 		// }
-		// 		updateEmpWrh({
-		// 			empID: get(ret, 'EmployeesInfo.EmployeeID'),
-		// 			wrh: get(ret, 'CustomBranches.U_Warehouse'),
-		// 			jobTitle: get(ret, 'EmployeesInfo.JobTitle'),
-		// 		})
-		// 		return res.status(200).json(ret)
-		// 	} catch (err) {
-		// 		return res
-		// 			.status(err?.response?.status || 400)
-		// 			.json(err?.response?.data || err)
-		// 	}
-		// } catch (e) {
-		// 	return next(e)
-		// }
+	}
+	
+	getUserBranchInfo = async (session) => {
+		const config = {
+			httpsAgent: new https.Agent({
+				rejectUnauthorized: false,
+			}),
+			headers: {
+				Cookie: `B1SESSION=${session.SessionId}; ROUTEID=.node2`
+			},
+		}
+		const url = 'https://su26-02.sb1.cloud/ServiceLayer/b1s/v2/$crossjoin(EmployeesInfo, skladlar_obyekt)?$expand=EmployeesInfo($select=EmployeeID,FirstName,LastName,SalesPersonCode,JobTitle),skladlar_obyekt($select=U_Sklad_udt,)&$filter=EmployeesInfo/U_Sklad eq skladlar_obyekt/DocEntry and EmployeesInfo/EmployeeID eq ' +
+		session.empID
+		const replydv = await Axios.get(url, config)
+		return replydv
 	}
 }
 
