@@ -98,25 +98,53 @@
     "sessions": [
         {
             "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "13729268-1286-11ef-8000-005056984211",
-            "Version": "1000190",
-            "SessionTimeout": 1500,
-            "empID": 3,
-            "startedAt": 1715755260816,
-            "active": true,
-            "isWeb": false,
-            "lang": "uz"
-        },
-        {
-            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
-            "SessionId": "faead3fe-1285-11ef-8000-005056984211",
+            "SessionId": "22267092-2e18-11ef-8000-005056984211",
             "Version": "1000190",
             "SessionTimeout": 1500,
             "empID": 4,
-            "startedAt": 1715755215271,
+            "startedAt": 1718786667362,
+            "active": true,
+            "isWeb": true,
+            "PurchaseOrders": 67,
+            "PurchaseInvoices": 403
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "a2e40a98-2277-11ef-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 6,
+            "startedAt": 1717508271758,
+            "active": true,
+            "isWeb": false
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "c2073004-2f96-11ef-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 3,
+            "startedAt": 1718951003043,
+            "token": "790a4665-b68f-4b87-bc0c-28f61f3b9940",
+            "lang": "uz",
+            "deviceId": "3060c53d3de98231",
             "active": true,
             "isWeb": false,
-            "lang": "uz"
+            "PurchaseOrders": 82
+        },
+        {
+            "@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#B1Sessions/$entity",
+            "SessionId": "01d653ee-2f93-11ef-8000-005056984211",
+            "Version": "1000190",
+            "SessionTimeout": 1500,
+            "empID": 5,
+            "startedAt": 1718949392425,
+            "active": true,
+            "isWeb": false,
+            "PurchaseOrders": 82,
+            "token": "dbce4d07-1b63-4d77-9a1a-fe6b4f6d864f",
+            "lang": "uz",
+            "deviceId": "A3717AEE-0799-4B1F-85BA-2B1D3E69A706"
         }
     ]
 }
