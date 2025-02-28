@@ -1,0 +1,133 @@
+{
+	"@odata.context": "https://su26-02.sb1.cloud:443/b1s/v2/$metadata#SQLQueries",
+	"value": [
+		{
+			"SqlCode": "getItemsByWarehousesv3",
+			"SqlName": "getItemsByWarehousesv3",
+			"SqlText": "SELECT\r    T0.\"ItemCode\",\r  T0.\"CreateDate\",\r   T0.\"ItemName\",\r    T1.\"OnHand\",\r    T1.\"WhsCode\",\r    T2.\"WhsName\"\rFROM\r    \"OITM\" T0\r    INNER JOIN \"OITW\" T1 ON T0.\"ItemCode\" = T1.\"ItemCode\"\r    INNER JOIN \"OWHS\" T2 ON T1.\"WhsCode\" = T2.\"WhsCode\"\rWHERE\r    T0.\"frozenFor\" = 'N'\r    AND T1.\"WhsCode\" = :WhsCode\r    AND T1.\"OnHand\" > :MinOnHand\r  AND T0.\"ItmsGrpCod\" = :GroupCode\r   AND T0.\"ItemCode\" LIKE :ItemCode\rORDER BY\r    T0.\"ItemCode\" ASC",
+			"ParamList": "WhsCode,MinOnHand,GroupCode,ItemCode",
+			"CreateDate": "2024-05-29T00:00:00Z",
+			"UpdateDate": "2024-05-29T00:00:00Z"
+		},
+		{
+			"SqlCode": "getPurchaseOrdersByWarehouseCode",
+			"SqlName": "getPurchaseOrdersByWarehouseCode",
+			"SqlText": "SELECT\r T0.\"DocEntry\",\r T0.\"CardName\",\r  T0.\"DocNum\",\r T0.\"CreateDate\",\r  T0.\"CardCode\"\r    FROM\r  \"OPOR\" T0\r INNER JOIN \"POR1\" T1\r  ON T0.\"DocEntry\" = T1.\"DocEntry\"\r    WHERE T1.\"WhsCode\" = :WhsCode\r    GROUP BY T0.\"DocEntry\",\r    T0.\"CardName\",\r  T0.\"DocNum\",\r  T0.\"CreateDate\",\r   T0.\"CardCode\" ORDER BY T0.\"DocNum\" DESC",
+			"ParamList": "WhsCode",
+			"CreateDate": "2024-05-29T00:00:00Z",
+			"UpdateDate": "2024-05-29T00:00:00Z"
+		},
+		{
+			"SqlCode": "getGoodsReceiptByWarehouseCode",
+			"SqlName": "getGoodsReceiptByWarehouseCode",
+			"SqlText": "SELECT T0.\"DocEntry\", T0.\"CardCode\", T0.\"CardName\", T0.\"CreateDate\", T0.\"DocNum\" FROM \"OPDN\" T0 INNER JOIN \"PDN1\" T1 ON T0.\"DocEntry\" = T1.\"DocEntry\" WHERE T1.\"WhsCode\" = :WhsCode order by T0.\"DocNum\" desc",
+			"ParamList": "WhsCode",
+			"CreateDate": "2024-05-29T00:00:00Z",
+			"UpdateDate": "2024-05-29T00:00:00Z"
+		},
+		{
+			"SqlCode": "getItemsWithPurchaseInvoice",
+			"SqlName": "getItemsWithPurchaseInvoice",
+			"SqlText": "SELECT \rT3.\"CardName\", \rT0.\"ItemName\", \rT0.\"ItemCode\", \rT0.\"OnHand\",  \rT0.\"BuyUnitMsr\",  \rT0.\"LastPurPrc\", \rT0.\"LastPurCur\", \rT1.\"Price\"\rFROM \r    \"OITM\"  T0 \r     INNER JOIN \"ITM1\"  T1 ON T0.\"ItemCode\" = T1.\"ItemCode\" \r     INNER JOIN \"OPLN\"  T2 ON T1.\"PriceList\" = T2.\"ListNum\", \"OPOR\" T3 \rWHERE \r      T2.\"ListNum\" = 1 \r      AND T0.\"SellItem\" = 'Y'\r      AND T0.\"ItemCode\" = :Code\rORDER BY T0.\"ExitPrice\" DESC",
+			"ParamList": "Code",
+			"CreateDate": "2024-05-29T00:00:00Z",
+			"UpdateDate": "2024-05-29T00:00:00Z"
+		},
+		{
+			"SqlCode": "getItemsQuantityInWarehouse",
+			"SqlName": "getItemsQuantityInWarehouse",
+			"SqlText": "SELECT\r    T0.\"ItemCode\",\r    T0.\"ItemName\",\r    T0.\"SalUnitMsr\",\r    T0.\"SUoMEntry\",\r    T1.\"OnHand\",\r    T1.\"WhsCode\",\r    T2.\"WhsName\",\r    T3.\"Price\"\rFROM\r    \"OITM\" T0\r    INNER JOIN \"OITW\" T1 ON T0.\"ItemCode\" = T1.\"ItemCode\"\r    INNER JOIN \"OWHS\" T2 ON T1.\"WhsCode\" = T2.\"WhsCode\"\r    INNER JOIN \"ITM1\" T3\r        ON T0.\"ItemCode\" = T3.\"ItemCode\" \r        AND T3.\"PriceList\" = 1\rWHERE\r  T0.\"frozenFor\" = 'N'\r  AND T1.\"WhsCode\" = :WhsCode\r ORDER BY\r    T0.\"ItemCode\" ASC",
+			"ParamList": "WhsCode",
+			"CreateDate": "2024-05-29T00:00:00Z",
+			"UpdateDate": "2024-05-29T00:00:00Z"
+		},
+		{
+			"SqlCode": "GetCashTransfers",
+			"SqlName": "GetCashTransfers",
+			"SqlText": "SELECT T1.\"DocNum\", T1.\"Account\", T2.\"AcctName\", T1.\"Debit\", T1.\"Credit\", T1.\"VatDate\" FROM \"OJDT\" T0 INNER JOIN \"JDT1\" T1 ON T0.\"TransId\" = T1.\"TransId\" INNER JOIN \"OACT\" T2 ON T1.\"Account\" = T2.\"AcctCode\" WHERE T0.\"U_Cash_Transfer\" = 1",
+			"ParamList": null,
+			"CreateDate": "2024-05-29T00:00:00Z",
+			"UpdateDate": "2024-05-29T00:00:00Z"
+		},
+		{
+			"SqlCode": "getZayavkaNaZakupku",
+			"SqlName": "GetPRQDetails",
+			"SqlText": "SELECT T1.\"DocEntry\", T1.\"Quantity\", T1.\"ItemCode\", T4.\"ItemName\", T1.\"ItemType\", T1.\"Currency\", T1.\"AcctCode\", T3.\"AcctName\", T1.\"WhsCode\", T2.\"WhsName\", T1.\"DocDate\" FROM  \"PRQ1\" T1 INNER JOIN \"OWHS\" T2 ON T1.\"WhsCode\" = T2.\"WhsCode\" INNER JOIN \"OACT\" T3 ON T1.\"AcctCode\" = T3.\"AcctCode\" INNER JOIN \"OITM\" T4 ON T1.\"ItemCode\" = T4.\"ItemCode\" WHERE T1.\"DocEntry\" = :DocEntry ORDER BY T1.\"DocEntry\" DESC",
+			"ParamList": "DocEntry",
+			"CreateDate": "2024-06-06T00:00:00Z",
+			"UpdateDate": "2024-06-06T00:00:00Z"
+		},
+		{
+			"SqlCode": "getGoodsReceiptByWarehouseCodeList",
+			"SqlName": "getGoodsReceiptByWarehouseCodeList",
+			"SqlText": "SELECT T1.\"WhsCode\", T1.\"DocEntry\", T0.\"DocNum\", T0.\"CardCode\", T0.\"CardName\", T0.\"DocDate\" FROM \"OPDN\" T0 INNER JOIN \"PDN1\" T1 ON T0.\"DocEntry\" = T1.\"DocEntry\" INNER JOIN \"OWHS\" T2 ON T1.\"WhsCode\" = T2.\"WhsCode\" WHERE T1.\"WhsCode\" = :WhsCode AND T0.\"CANCELED\" = 'N' GROUP BY T1.\"WhsCode\", T1.\"DocEntry\", T0.\"DocNum\", T0.\"CardCode\", T0.\"CardName\", T0.\"DocDate\" ORDER BY T1.\"DocEntry\" ASC",
+			"ParamList": "WhsCode",
+			"CreateDate": "2024-06-13T00:00:00Z",
+			"UpdateDate": "2024-06-13T00:00:00Z"
+		},
+		{
+			"SqlCode": "GetAvailableItemsByWarehouse",
+			"SqlName": "GetAvailableItemsByWarehouse",
+			"SqlText": "SELECT T0.\"ItemCode\", T0.\"ItemName\", T1.\"OnHand\", T1.\"WhsCode\", T2.\"WhsName\", T0.\"LastPurPrc\", T3.\"U_price\", T0.\"ItmsGrpCod\" FROM \"OITM\" T0 INNER JOIN \"OITW\" T1 ON T0.\"ItemCode\" = T1.\"ItemCode\" INNER JOIN \"OWHS\" T2 ON T1.\"WhsCode\" = T2.\"WhsCode\" INNER JOIN \"PCH1\" T3 ON T0.\"ItemCode\" = T3.\"ItemCode\" WHERE T0.\"frozenFor\" = 'N' AND T1.\"WhsCode\" = :WhsCode AND T1.\"OnHand\" > 0 AND T0.\"ItmsGrpCod\" = :GrpCode ORDER BY T3.\"DocDate\" DESC",
+			"ParamList": "WhsCode,GrpCode",
+			"CreateDate": "2024-06-06T00:00:00Z",
+			"UpdateDate": "2024-06-06T00:00:00Z"
+		},
+		{
+			"SqlCode": "GetPurchaseOrders",
+			"SqlName": "GetPurchaseOrders",
+			"SqlText": "SELECT T0.\"DocEntry\", T0.\"AcctCode\", T0.\"GTotal\", T0.\"ItemCode\", T0.\"PriceAfVAT\", T0.\"Price\", T0.\"Quantity\", T1.\"WhsCode\", T1.\"WhsName\",  T2.\"AcctName\", T3.\"ItemName\" FROM \"POR1\" T0 INNER JOIN \"OWHS\" T1 ON T0.\"WhsCode\" = T1.\"WhsCode\" INNER JOIN \"OACT\" T2 ON T0.\"AcctCode\" = T2.\"AcctCode\" INNER JOIN \"OITM\" T3 ON T0.\"ItemCode\" = T3.\"ItemCode\" WHERE T0.\"DocEntry\" = :DocEntry ORDER BY T0.\"DocEntry\" DESC",
+			"ParamList": "DocEntry",
+			"CreateDate": "2024-06-07T00:00:00Z",
+			"UpdateDate": "2024-06-07T00:00:00Z"
+		},
+		{
+			"SqlCode": "getAktSverki",
+			"SqlName": "getAktSverki",
+			"SqlText": "SELECT T0.\"CardCode\", T0.\"CardName\", T1.\"DocNum\" AS \"zakup_num\", T1.\"DocTotal\" AS \"zakup_total\", T1.\"DocDate\" AS \"zakup_date\", T1.\"DocStatus\" AS \"zakup_status\", T2.\"DocNum\" AS \"payment_num\", T2.\"CashSum\" AS \"payment_sum\", T2.\"DocDate\" AS \"payment_date\", T2.\"DocTotal\" AS \"payment_total\" FROM \"OCRD\" T0 INNER JOIN \"OPCH\" T1 ON T0.\"CardCode\" = T1.\"CardCode\" INNER JOIN \"OVPM\" T2 ON T0.\"CardCode\" = T2.\"CardCode\" WHERE T1.\"CANCELED\" = 'N' AND T0.\"CardCode\" = :CrdCode ORDER BY T0.\"CardCode\"",
+			"ParamList": "CrdCode",
+			"CreateDate": "2024-06-06T00:00:00Z",
+			"UpdateDate": "2024-06-06T00:00:00Z"
+		},
+		{
+			"SqlCode": "getAcctDetailsByAcctCode",
+			"SqlName": "getAcctDetailsByAcctCode",
+			"SqlText": "SELECT T0.\"AcctCode\", \r    T0.\"AcctName\", \r    T1.\"CardCode\" AS \"IncomingCardCode\", \r    T1.\"CardName\" AS \"IncomingCardName\", \r    T1.\"DocCurr\"  AS \"IncomingDocCurrency\",\r    T1.\"DocTotal\" AS  \"IncomingDocTotal\",\r    T1.\"DocDate\" AS \"IncomingDocDate\",\r    T2.\"CardCode\" AS \"OutgoingCardCode\",   \r    T2.\"CardName\" AS \"OutgoingCardName\",   \r    T2.\"DocTotal\" AS  \"OutgoingDocTotal\",\r    T2.\"DocCurr\"  AS \"OutgoingDocCurrency\",\r    T2.\"DocDate\" AS \"OutgoingDocDate\" \rFROM \"OACT\" T0  \rINNER JOIN \"ORCT\" T1 ON T0.\"AcctCode\" = T1.\"CashAcct\" \rINNER JOIN \"OVPM\" T2 ON T0.\"AcctCode\" = T2.\"CashAcct\" \rWHERE T0.\"AcctCode\"  = :AcctCode \rORDER BY T1.\"DocDate\" desc, T2.\"DocDate\" desc",
+			"ParamList": "AcctCode",
+			"CreateDate": "2024-06-22T00:00:00Z",
+			"UpdateDate": "2024-06-22T00:00:00Z"
+		},
+		{
+			"SqlCode": "GetSalesStatsByPEriod",
+			"SqlName": "GetSalesStatsByPEriod",
+			"SqlText": "SELECT COUNT(T0.\"DocNum\") AS \"SalesCount\", SUM(T0.\"DocTotal\") AS \"SalesDocTotal\"FROM \"OINV\" T0 WHERE T0.\"DocDate\" >= :startDate AND T0.\"DocDate\" <= :endDate AND T0.\"CANCELED\" = 'N'",
+			"ParamList": "startDate,endDate",
+			"CreateDate": "2024-08-08T00:00:00Z",
+			"UpdateDate": "2024-08-08T00:00:00Z"
+		},
+		{
+			"SqlCode": "test",
+			"SqlName": "test",
+			"SqlText": "SELECT T0.\"DocDate\" FROM \"OINV\" T0 WHERE T0.\"DocEntry\" = :inparams",
+			"ParamList": "inparams",
+			"CreateDate": "2024-09-10T00:00:00Z",
+			"UpdateDate": "2024-09-10T00:00:00Z"
+		},
+		{
+			"SqlCode": "GetWhsNames",
+			"SqlName": "GetWhsNames",
+			"SqlText": "SELECT  T3.\"WhsName\" FROM \"OWHS\" T3 WHERE T3.\"WhsName\" <> 'tamoj' AND T3.\"WhsName\" <> 'Asosiy sklad'",
+			"ParamList": null,
+			"CreateDate": "2024-08-21T00:00:00Z",
+			"UpdateDate": "2024-08-21T00:00:00Z"
+		},
+		{
+			"SqlCode": "GetItemGroups",
+			"SqlName": "GetItemGroups",
+			"SqlText": "SELECT DISTINCT(T0.\"U_finalgroup\") AS \"ItmsGrpNam\" FROM \"OITM\" T0 ORDER BY T0.\"U_finalgroup\"",
+			"ParamList": null,
+			"CreateDate": "2024-08-21T00:00:00Z",
+			"UpdateDate": "2024-08-21T00:00:00Z"
+		}
+	]
+}
